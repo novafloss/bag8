@@ -1,0 +1,6 @@
+link:
+  image: busybox
+app:
+  image: bag8/busybox:0.1
+  links:
+    - link:busybox.official
