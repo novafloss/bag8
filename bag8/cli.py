@@ -69,12 +69,14 @@ bag8.add_command(cp)
               help='Command to exec in a running container, default: `bash`.')
 @click.option('-i', '--interactive', default=False, is_flag=True,
               help="Exec command in interactive mode, default: False.")
-def exec_(container, command, interactive, project):
+@click.option('-p', '--prefix', default=PREFIX,
+              help="Prefix name of containers.")
+def exec_(container, command, interactive, prefix, project):
     """Exec a command into a running container, default: `bash`.
 
     eq: docker exec (-it) <container> <command>
     """
-    Dockext(container=container, project=project)\
+    Dockext(container=container, prefix=prefix, project=project)\
         .exec_(command=command, interactive=interactive)
 
 bag8.add_command(exec_)
@@ -94,12 +96,14 @@ bag8.add_command(hosts)
 @click.command()
 @click.argument('project')
 @click.argument('container', default='')
-def inspect(container, project):
+@click.option('-p', '--prefix', default=PREFIX,
+              help="Prefix name of containers.")
+def inspect(container, prefix, project):
     """Inspects a container for a given project.
 
     eq: docker inspect <container>
     """
-    Dockext(container=container, project=project).inspect()
+    Dockext(container=container, prefix=prefix, project=project).inspect()
 
 bag8.add_command(inspect)
 
@@ -107,12 +111,14 @@ bag8.add_command(inspect)
 @click.command()
 @click.argument('project')
 @click.argument('container', default='')
-def logs(container, project):
+@click.option('-p', '--prefix', default=PREFIX,
+              help="Prefix name of containers.")
+def logs(container, prefix, project):
     """Follows a container logs for a given project.
 
     eq: docker logs -f <container>
     """
-    Dockext(container=container, project=project).logs()
+    Dockext(container=container, prefix=prefix, project=project).logs()
 
 bag8.add_command(logs)
 
@@ -218,13 +224,15 @@ bag8.add_command(render)
 @click.argument('project')
 @click.option('-a', '--all', default=False, is_flag=True,
               help="Removes all corresponding containers if has more than one.")  # noqa
+@click.option('-p', '--prefix', default=PREFIX,
+              help="Prefix name of containers.")
 @click.argument('container', default='')
-def rm(all, container, project):
+def rm(all, container, prefix, project):
     """Removes a container for a given project.
 
     eq: docker rm -f <container>
     """
-    Dockext(container=container, project=project).rm(all=all)
+    Dockext(container=container, prefix=prefix, project=project).rm(all=all)
 
 bag8.add_command(rm)
 
@@ -281,12 +289,14 @@ bag8.add_command(run)
 @click.argument('container', default='')
 @click.option('-i', '--interactive', default=False, is_flag=True,
               help="Start exited container in interactive mode, default: False.")  # noqa
-def start(container, interactive, project):
+@click.option('-p', '--prefix', default=PREFIX,
+              help="Prefix name of containers.")
+def start(container, interactive, prefix, project):
     """Start a container in interactive mode for a given project.
 
     eq: docker start (-i) <container>
     """
-    Dockext(container=container, project=project).start(interactive=interactive)  # noqa
+    Dockext(container=container, prefix=prefix, project=project).start(interactive=interactive)  # noqa
 
 bag8.add_command(start)
 
@@ -294,12 +304,14 @@ bag8.add_command(start)
 @click.command()
 @click.argument('project')
 @click.argument('container', default='')
-def stop(container, project):
+@click.option('-p', '--prefix', default=PREFIX,
+              help="Prefix name of containers.")
+def stop(container, prefix, project):
     """Stop a container for a given project.
 
     eq: docker stop <container>
     """
-    Dockext(container=container, project=project).stop()
+    Dockext(container=container, prefix=prefix, project=project).stop()
 
 bag8.add_command(stop)
 

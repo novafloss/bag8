@@ -3,6 +3,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import click
 import os
 
+from bag8.common import PREFIX
 from bag8.common import TMPFOLDER
 
 from bag8.common import call
@@ -14,8 +15,10 @@ from bag8.common import get_image_name
 
 class Dockext(Bag8Mixin):
 
-    def __init__(self, container=None, project=None, tag='latest'):
-        super(Dockext, self).__init__(container=container, project=project)
+    def __init__(self, container=None, prefix=PREFIX, project=None,
+                 tag='latest'):
+        super(Dockext, self).__init__(container=container, prefix=prefix,
+                                      project=project)
         self.tag = tag
 
     @property
