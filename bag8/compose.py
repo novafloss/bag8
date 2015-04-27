@@ -15,7 +15,7 @@ class Figext(Bag8Mixin):
     def __init__(self, project, environment=None, links=None, ports=True,
                  reuseyml=False, user=None, volumes=None, no_volumes=False,
                  prefix=PREFIX):
-        super(Figext, self).__init__(project=project)
+        super(Figext, self).__init__(prefix=prefix, project=project)
 
         self.name = simple_name(self.project)
         self.no_volumes = no_volumes
@@ -27,7 +27,6 @@ class Figext(Bag8Mixin):
         self.environment = environment or {}
         self.links = links or []
         self.volumes = volumes or []
-        self.prefix = prefix
 
     def call(self, action, extra_args=None):
         extra_args = extra_args if isinstance(extra_args, list) else []

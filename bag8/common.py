@@ -56,9 +56,9 @@ def get_available_projects():
     return [p for __, p in iter_bag8_paths()]
 
 
-def get_container_name(project):
+def get_container_name(project, prefix=PREFIX):
 
-    containers = [n for n, c in iter_containers(all=True,
+    containers = [n for n, c in iter_containers(all=True, prefix=prefix,
                                                 project=project)]
 
     if not containers:
@@ -378,13 +378,16 @@ def update_yml_dict(yml_dict, project, ports=True, no_volumes=False):
 
 class Bag8Mixin(object):
 
-    def __init__(self, container=None, project=None):
+    def __init__(self, container=None, prefix=PREFIX, project=None):
         self._container = container
+        self.prefix = prefix
         self.project = project
 
     def get_containers(self):
-        return [n for n, c in iter_containers(all=True, project=self.project)]
+        return [n for n, c in iter_containers(all=True, prefix=self.prefix,
+                                              project=self.project)]
 
     @property
     def container(self):
-        return self._container or get_container_name(self.project)
+        return self._container or get_container_name(self.project,
+                                                     prefix=self.prefix)
