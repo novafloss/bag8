@@ -119,6 +119,7 @@ class Tools(object):
             '-d',
             '--name {0}_nginx_1'.format(PREFIX),  # TODO get prefix from cli
             '-p', '0.0.0.0:80:80',
+            '-p', '0.0.0.0:443:443',
             '--hostname www.nginx.local',
             ' '.join(['--volumes-from {0}'.format(v) for v in volumes_from]),
             ' '.join(['-v {0}'.format(v) for v in volumes]),
