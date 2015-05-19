@@ -334,15 +334,17 @@ bag8.add_command(stop)
               help='Volumes list to mount into the container, ex: \'["/tmp:/home/src"]\'.')  # noqa
 @click.option('--no-volumes', default=False, is_flag=True,
               help="Skip volumes if not necessary.")
-def up(project, daemon, environment, links, ports, reuseyml, user, volumes,
-       no_volumes):
+@click.option('-p', '--prefix', default=PREFIX,
+              help="Prefix name of containers.")
+def up(project, daemon, environment, links, ports, prefix, reuseyml, user,
+       volumes, no_volumes):
     """Triggers `docker-compose up` command for a given project.
 
     Environment, links, user, volumes can be overriden and will be embedded in
     the generated fig.yml.
     """
     Figext(project, environment=environment, links=links, ports=ports,
-           reuseyml=reuseyml, user=user, volumes=volumes,
+           prefix=prefix, reuseyml=reuseyml, user=user, volumes=volumes,
            no_volumes=no_volumes).up(daemon=daemon)
 
 bag8.add_command(up)
