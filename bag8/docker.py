@@ -9,8 +9,11 @@ from bag8.common import TMPFOLDER
 from bag8.common import call
 from bag8.common import exec_
 from bag8.common import Bag8Mixin
+from bag8.common import get_container_name
 from bag8.common import get_dockerfile_path
 from bag8.common import get_image_name
+from bag8.common import iter_deps
+from bag8.common import iter_containers
 
 
 class Dockext(Bag8Mixin):
@@ -99,6 +102,16 @@ runnning `docker build` you can edit it and add some step.
         exec_('docker rmi {0}'.format(self.image))
 
     def start(self, interactive=False):
+
+        # check deps
+        for dep in iter_deps(self.project):
+            # started
+            if dep in [d for d in iter_containers(project=dep)]:
+                continue
+            # start dependency
+            container = get_container_name(dep, prefix=self.prefix)
+            call('docker start {0}'.format(container))
+
         exec_('docker start {0} {1}'.format('-i ' if interactive else '',
                                             self.container))
 
