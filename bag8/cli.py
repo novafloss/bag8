@@ -1,5 +1,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
+import os.path
+
 import click
 
 from bag8.common import PREFIX
@@ -348,3 +350,23 @@ def up(project, daemon, environment, links, ports, prefix, reuseyml, user,
            no_volumes=no_volumes).up(daemon=daemon)
 
 bag8.add_command(up)
+
+
+@bag8.command()
+@click.argument('project', default=lambda: os.path.basename(os.getcwd()))
+def develop(project):
+    """Drop you in develop environment of your project."""
+    from bag8.common import get_container_name
+
+    try:
+        container = get_container_name(project)
+    except SystemExit:
+        # get_container_name calls sys.exit...
+        Figext(project, develop_mode=True).run(command='bash')
+    else:
+        container = Dockext(container=container, project=project)
+        data = container.inspect_live()
+        if data[0]['State']['Running']:
+            container.exec_(interactive=True)
+        else:
+            container.start(interactive=True)

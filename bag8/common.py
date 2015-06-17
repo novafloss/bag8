@@ -226,7 +226,8 @@ def json_check(environment, links, volumes):
 
 
 def render_yml(project, environment=None, links=None, ports=True, user=None,
-               volumes=None, no_volumes=False, prefix=PREFIX):
+               volumes=None, no_volumes=False, prefix=PREFIX,
+               develop_mode=False):
 
     environment = environment if isinstance(environment, list) else []
     links = links if isinstance(links, list) else []
@@ -250,6 +251,11 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
     # updates volumes
     app_section['volumes'] = yml_dict[app].get('volumes', []) \
         + volumes
+
+    if develop_mode:
+        for v in app_section.get('dev_volumes', []):
+            app_section['volumes'].append(v % os.environ)
+    del app_section['dev_volumes']
 
     # set user if not has one
     if user and 'user' not in app_section:
