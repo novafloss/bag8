@@ -248,6 +248,12 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
     app_section['links'] = yml_dict[app].get('links', []) \
         + links
 
+    # clean links according tree permitted names and project accepted ones,
+    # ex.: dummy.js:dummyjs.local > dummyjs:dummyjs.local
+    app_section['links'] = [':'.join((simple_name(k), v))
+                            for k, v in [l.split(':')
+                                         for l in app_section['links']]]
+
     # updates volumes
     app_section['volumes'] = yml_dict[app].get('volumes', []) \
         + volumes
