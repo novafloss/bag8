@@ -255,7 +255,9 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
     if develop_mode:
         for v in app_section.get('dev_volumes', []):
             app_section['volumes'].append(v % os.environ)
-    del app_section['dev_volumes']
+    # clean custom section
+    if 'dev_volumes' in app_section:
+        del app_section['dev_volumes']
 
     # set user if not has one
     if user and 'user' not in app_section:
