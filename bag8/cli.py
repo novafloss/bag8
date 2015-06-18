@@ -327,6 +327,8 @@ bag8.add_command(stop)
 @click.argument('project')
 @click.option('-d', '--daemon', default=False, is_flag=True,
               help='Start the containers in the background and leave them running, default: False.')  # noqa
+@click.option('--develop', default=False, is_flag=True,
+              help='Start the containers in develop mode. default: False.')
 @click.option('-e', '--environment', default='',
               help='Environment variables to pass to the container, ex: \'["BRANCH=master", "RUN=test"]\'.')  # noqa
 @click.option('-l', '--links', default='',
@@ -343,8 +345,8 @@ bag8.add_command(stop)
               help="Skip volumes if not necessary.")
 @click.option('-p', '--prefix', default=PREFIX,
               help="Prefix name of containers.")
-def up(project, daemon, environment, links, ports, prefix, reuseyml, user,
-       volumes, no_volumes):
+def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
+       user, volumes, no_volumes):
     """Triggers `docker-compose up` command for a given project.
 
     Environment, links, user, volumes can be overriden and will be embedded in
@@ -352,7 +354,7 @@ def up(project, daemon, environment, links, ports, prefix, reuseyml, user,
     """
     Figext(project, environment=environment, links=links, ports=ports,
            prefix=prefix, reuseyml=reuseyml, user=user, volumes=volumes,
-           no_volumes=no_volumes).up(daemon=daemon)
+           no_volumes=no_volumes, develop_mode=develop).up(daemon=daemon)
 
 bag8.add_command(up)
 
