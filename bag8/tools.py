@@ -24,8 +24,9 @@ from bag8.common import update_local_hosts
 
 class Tools(object):
 
-    def __init__(self, project=None):
+    def __init__(self, project=None, develop_mode=False):
         self.project = project
+        self.develop_mode = develop_mode
 
     def hosts(self):
         """Updates your containers /etc/hosts and/or you local /etc/hosts.
@@ -136,4 +137,5 @@ class Tools(object):
 
         render_yml(self.project, environment=environment, links=links,
                    ports=ports, user=user, volumes=volumes,
-                   no_volumes=no_volumes, prefix=prefix)
+                   no_volumes=no_volumes, prefix=prefix,
+                   develop_mode=self.develop_mode)

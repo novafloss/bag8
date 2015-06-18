@@ -202,7 +202,9 @@ bag8.add_command(rebuild)
 
 
 @click.command()
-@click.argument('project')
+@click.argument('project', default=cwdname)
+@click.option('--develop', default=False, is_flag=True,
+              help='Start the containers in develop mode. default: False.')
 @click.option('-e', '--environment', default='',
               help='Environment variables to pass to the container, ex: \'["BRANCH=master", "RUN=test"]\'.')  # noqa
 @click.option('-l', '--links', default='',
@@ -217,12 +219,14 @@ bag8.add_command(rebuild)
               help="Skip volumes if not necessary.")
 @click.option('-p', '--prefix', default=PREFIX,
               help="Prefix name of containers.")
-def render(project, environment, links, ports, user, volumes, no_volumes,
-           prefix):
+def render(project, develop, environment, links, ports, user, volumes,
+           no_volumes, prefix):
     """Generates a fig.yml file for a given project and overriding ags.
     """
-    Tools(project=project).render(environment, links, ports, user, volumes,
-                                  no_volumes, prefix)
+    (
+        Tools(project=project, develop_mode=develop)
+        .render(environment, links, ports, user, volumes, no_volumes, prefix)
+    )
 
 bag8.add_command(render)
 

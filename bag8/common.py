@@ -244,6 +244,14 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
         app_section.get('environment', []) \
         + environment
 
+    if develop_mode:
+        app_section['environment'].extend(
+            app_section.get('dev_environment', []))
+
+    # clean dev section
+    if 'dev_environment' in app_section:
+        del app_section['dev_environment']
+
     # updates links
     app_section['links'] = yml_dict[app].get('links', []) \
         + links
