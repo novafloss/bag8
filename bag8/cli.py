@@ -12,6 +12,10 @@ from bag8.tools import Tools
 from compose.cli.main import setup_logging
 
 
+def cwdname():
+    return os.path.basename(os.getcwd())
+
+
 @click.group()
 def bag8():
     setup_logging()
@@ -305,7 +309,7 @@ bag8.add_command(start)
 
 
 @click.command()
-@click.argument('project')
+@click.argument('project', default=cwdname)
 @click.argument('container', default='')
 @click.option('-p', '--prefix', default=PREFIX,
               help="Prefix name of containers.")
@@ -354,7 +358,7 @@ bag8.add_command(up)
 
 
 @bag8.command()
-@click.argument('project', default=lambda: os.path.basename(os.getcwd()))
+@click.argument('project', default=cwdname)
 def develop(project):
     """Drop you in develop environment of your project."""
     from bag8.common import get_container_name
