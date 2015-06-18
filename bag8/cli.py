@@ -224,10 +224,8 @@ def render(project, develop, environment, links, ports, user, volumes,
            no_volumes, prefix):
     """Generates a fig.yml file for a given project and overriding ags.
     """
-    (
-        Tools(project=project, develop_mode=develop)
-        .render(environment, links, ports, user, volumes, no_volumes, prefix)
-    )
+    Tools(project=project).render(environment, links, ports, user,
+                                  volumes, no_volumes, prefix, develop)
 
 bag8.add_command(render)
 
@@ -359,7 +357,7 @@ def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
     """
     Figext(project, environment=environment, links=links, ports=ports,
            prefix=prefix, reuseyml=reuseyml, user=user, volumes=volumes,
-           no_volumes=no_volumes, develop_mode=develop).up(daemon=daemon)
+           no_volumes=no_volumes, develop=develop).up(daemon=daemon)
 
 bag8.add_command(up)
 

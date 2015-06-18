@@ -14,10 +14,10 @@ class Figext(Bag8Mixin):
 
     def __init__(self, project, environment=None, links=None, ports=True,
                  reuseyml=False, user=None, volumes=None, no_volumes=False,
-                 prefix=PREFIX, develop_mode=False):
+                 prefix=PREFIX, develop=False):
         super(Figext, self).__init__(prefix=prefix, project=project)
 
-        self.develop_mode = develop_mode
+        self.develop = develop
         self.name = simple_name(self.project)
         self.no_volumes = no_volumes
         self.ports = ports
@@ -37,7 +37,7 @@ class Figext(Bag8Mixin):
             render_yml(self.project, environment=self.environment,
                        links=self.links, ports=self.ports, user=self.user,
                        volumes=self.volumes, no_volumes=self.no_volumes,
-                       prefix=self.prefix, develop_mode=self.develop_mode)
+                       prefix=self.prefix, develop=self.develop)
 
         # we work in an insecure environment by default
         extra_args.insert(0, '--allow-insecure-ssl')
