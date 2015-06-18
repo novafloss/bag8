@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os.path
 import logging
+from subprocess import check_call
 
 import click
 
@@ -10,6 +11,10 @@ from bag8.docker import Dockext
 from bag8.compose import Figext
 from bag8.tools import Tools
 from compose.cli.main import setup_logging
+
+
+def cwdname():
+    return os.path.basename(os.getcwd())
 
 
 @click.group()
@@ -198,7 +203,9 @@ bag8.add_command(rebuild)
 
 
 @click.command()
-@click.argument('project')
+@click.argument('project', default=cwdname)
+@click.option('--develop', default=False, is_flag=True,
+              help='Start the containers in develop mode. default: False.')
 @click.option('-e', '--environment', default='',
               help='Environment variables to pass to the container, ex: \'["BRANCH=master", "RUN=test"]\'.')  # noqa
 @click.option('-l', '--links', default='',
@@ -213,12 +220,14 @@ bag8.add_command(rebuild)
               help="Skip volumes if not necessary.")
 @click.option('-p', '--prefix', default=PREFIX,
               help="Prefix name of containers.")
-def render(project, environment, links, ports, user, volumes, no_volumes,
-           prefix):
+def render(project, develop, environment, links, ports, user, volumes,
+           no_volumes, prefix):
     """Generates a fig.yml file for a given project and overriding ags.
     """
-    Tools(project=project).render(environment, links, ports, user, volumes,
-                                  no_volumes, prefix)
+    (
+        Tools(project=project, develop_mode=develop)
+        .render(environment, links, ports, user, volumes, no_volumes, prefix)
+    )
 
 bag8.add_command(render)
 
@@ -305,7 +314,7 @@ bag8.add_command(start)
 
 
 @click.command()
-@click.argument('project')
+@click.argument('project', default=cwdname)
 @click.argument('container', default='')
 @click.option('-p', '--prefix', default=PREFIX,
               help="Prefix name of containers.")
@@ -323,6 +332,8 @@ bag8.add_command(stop)
 @click.argument('project')
 @click.option('-d', '--daemon', default=False, is_flag=True,
               help='Start the containers in the background and leave them running, default: False.')  # noqa
+@click.option('--develop', default=False, is_flag=True,
+              help='Start the containers in develop mode. default: False.')
 @click.option('-e', '--environment', default='',
               help='Environment variables to pass to the container, ex: \'["BRANCH=master", "RUN=test"]\'.')  # noqa
 @click.option('-l', '--links', default='',
@@ -339,8 +350,8 @@ bag8.add_command(stop)
               help="Skip volumes if not necessary.")
 @click.option('-p', '--prefix', default=PREFIX,
               help="Prefix name of containers.")
-def up(project, daemon, environment, links, ports, prefix, reuseyml, user,
-       volumes, no_volumes):
+def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
+       user, volumes, no_volumes):
     """Triggers `docker-compose up` command for a given project.
 
     Environment, links, user, volumes can be overriden and will be embedded in
@@ -348,13 +359,13 @@ def up(project, daemon, environment, links, ports, prefix, reuseyml, user,
     """
     Figext(project, environment=environment, links=links, ports=ports,
            prefix=prefix, reuseyml=reuseyml, user=user, volumes=volumes,
-           no_volumes=no_volumes).up(daemon=daemon)
+           no_volumes=no_volumes, develop_mode=develop).up(daemon=daemon)
 
 bag8.add_command(up)
 
 
 @bag8.command()
-@click.argument('project', default=lambda: os.path.basename(os.getcwd()))
+@click.argument('project', default=cwdname)
 def develop(project):
     """Drop you in develop environment of your project."""
     from bag8.common import get_container_name
@@ -363,14 +374,14 @@ def develop(project):
         container = get_container_name(project)
     except SystemExit:
         # get_container_name calls sys.exit...
-        logging.info("Running new instance")
-        Figext(project, develop_mode=True).run(command='bash')
-    else:
-        container = Dockext(container=container, project=project)
-        data = container.inspect_live()
-        if data[0]['State']['Running']:
-            logging.info("Create new shell")
-            container.exec_(interactive=True)
-        else:
-            logging.info("Restarting instance")
-            container.start(interactive=True)
+        logging.info("Spawning new instance in background")
+        check_call(['bag8', 'up', '--daemon', '--develop', project])
+        container = get_container_name(project)
+
+    container = Dockext(container=container, project=project)
+    data = container.inspect_live()
+    if not data[0]['State']['Running']:
+        logging.info("Restarting instance")
+        check_call(['bag8', 'start', project])
+
+    container.exec_(interactive=True)

@@ -122,4 +122,8 @@ runnning `docker build` you can edit it and add some step.
                                             self.container))
 
     def stop(self):
+        for dep in iter_deps(self.project):
+            container = get_container_name(dep, prefix=self.prefix)
+            call('docker stop {0}'.format(container))
+
         exec_('docker stop {0}'.format(self.container))
