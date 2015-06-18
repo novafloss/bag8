@@ -1,12 +1,13 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import os.path
-import logging
-from subprocess import check_call
 
 import click
 
 from bag8.common import PREFIX
+from bag8.common import call
+from bag8.common import get_container_name
+from bag8.common import iter_containers
 from bag8.docker import Dockext
 from bag8.compose import Figext
 from bag8.tools import Tools
@@ -364,22 +365,49 @@ bag8.add_command(up)
 
 @bag8.command()
 @click.argument('project', default=cwdname)
-def develop(project):
+@click.option('-e', '--environment', default='',
+              help='Environment variables to pass to the container, ex: \'["BRANCH=master", "RUN=test"]\'.')  # noqa
+@click.option('-l', '--links', default='',
+              help='Links list to link with the main app container, ex: \'["app:app.local"]\'.')  # noqa
+@click.option('--ports/--no-ports', default=True,
+              help="Expose ports or not, default: True")
+@click.option('-r', '--reuseyml', default=False, is_flag=True,
+              help="Reuse previous generated fig.yml file, default: False")
+@click.option('-u', '--user', default=None,
+              help='Specifies the user for the app to run, ex: root.')  # noqa
+@click.option('-v', '--volumes', default='',
+              help='Volumes list to mount into the container, ex: \'["/tmp:/home/src"]\'.')  # noqa
+@click.option('--no-volumes', default=False, is_flag=True,
+              help="Skip volumes if not necessary.")
+@click.option('-p', '--prefix', default=PREFIX,
+              help="Prefix name of containers.")
+def develop(project, environment, links, ports, prefix, reuseyml, user,
+            volumes, no_volumes):
     """Drop you in develop environment of your project."""
-    from bag8.common import get_container_name
+
+    # stop other prefix containers to avoid addr in use conflict
+    for name, data in iter_containers(prefix='.*'):
+        # ok no conflict
+        if name.startswith(prefix):
+            continue
+        # stop
+        call('docker stop {0}'.format(name))
 
     try:
-        container = get_container_name(project)
+        container = get_container_name(project, prefix=prefix)
     except SystemExit:
-        # get_container_name calls sys.exit...
-        logging.info("Spawning new instance in background")
-        check_call(['bag8', 'up', '--daemon', '--develop', project])
-        container = get_container_name(project)
+        click.echo("Spawning new instance in background")
+        Figext(project, environment=environment, links=links, ports=ports,
+               prefix=prefix, reuseyml=reuseyml, user=user, volumes=volumes,
+               no_volumes=no_volumes, develop=True).up(daemon=True)
+        container = get_container_name(project, prefix=prefix)
 
-    container = Dockext(container=container, project=project)
-    data = container.inspect_live()
-    if not data[0]['State']['Running']:
-        logging.info("Restarting instance")
-        check_call(['bag8', 'start', project])
+    dockext = Dockext(container=container, prefix=prefix, project=project)
 
-    container.exec_(interactive=True)
+    # start in bg if not running yet
+    if not dockext.inspect_live()[0]['State']['Running']:
+        click.echo("Restarting instance")
+        dockext.start(call_func=call)
+
+    # enter in it
+    dockext.exec_(interactive=True)
