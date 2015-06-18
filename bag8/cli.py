@@ -22,7 +22,7 @@ def bag8():
     setup_logging()
 
 
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.option('-f', '--force', default=False, is_flag=True,
               help="Force no cache, default: False.")
@@ -35,10 +35,8 @@ def build(force, project, tag):
     """
     Dockext(project=project, tag=tag).build(force=force)
 
-bag8.add_command(build)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.argument('container', default='')
 @click.option('-t', '--tag', default='latest',
@@ -51,10 +49,8 @@ def commit(container, project, tag):
     """
     Dockext(container=container, project=project, tag=tag).commit()
 
-bag8.add_command(commit)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.argument('container', default='')
 @click.option('-d', '--dest', default='.',
@@ -67,10 +63,8 @@ def cp(container, dest, project, src):
     """
     Dockext(container=container, project=project).cp(src, dest=dest)
 
-bag8.add_command(cp)
 
-
-@click.command(name='exec')
+@bag8.command(name='exec')
 @click.argument('project')
 @click.argument('container', default='')
 @click.option('-c', '--command', default='bash',
@@ -87,10 +81,8 @@ def exec_(container, command, interactive, prefix, project):
     Dockext(container=container, prefix=prefix, project=project)\
         .exec_(command=command, interactive=interactive)
 
-bag8.add_command(exec_)
 
-
-@click.command()
+@bag8.command()
 def hosts():
     """Updates /etc/hosts for containers and host
 
@@ -98,10 +90,8 @@ def hosts():
     """
     Tools().hosts()
 
-bag8.add_command(hosts)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.argument('container', default='')
 @click.option('-p', '--prefix', default=PREFIX,
@@ -113,10 +103,8 @@ def inspect(container, prefix, project):
     """
     Dockext(container=container, prefix=prefix, project=project).inspect()
 
-bag8.add_command(inspect)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.argument('container', default='')
 @click.option('-p', '--prefix', default=PREFIX,
@@ -128,10 +116,8 @@ def logs(container, prefix, project):
     """
     Dockext(container=container, prefix=prefix, project=project).logs()
 
-bag8.add_command(logs)
 
-
-@click.command()
+@bag8.command()
 @click.option('-l', '--links', default='',
               help='Links list to link with the main app container, ex: \'["app:app.local"]\'.')  # noqa
 @click.option('-v', '--volumes', default='',
@@ -141,18 +127,14 @@ def nginx(links, volumes):
     """
     Tools().nginx(links=links, volumes=volumes)
 
-bag8.add_command(nginx)
 
-
-@click.command()
+@bag8.command()
 def projects():
     """Lists available projects."""
     Tools().projects()
 
-bag8.add_command(projects)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.option('-r', '--reuseyml', default=False, is_flag=True,
               help="Reuse previous generated fig.yml file, default: False")
@@ -174,10 +156,8 @@ def pull(project, reuseyml, tag):
     else:
         Figext(project=project, reuseyml=reuseyml).pull()
 
-bag8.add_command(pull)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.option('-t', '--tag', default='latest',
               help='Specifies the image tag to build, default: latest')
@@ -187,10 +167,8 @@ def push(project, tag):
     """
     Dockext(project=project, tag=tag).push()
 
-bag8.add_command(push)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.option('-t', '--tag', default='latest',
               help='Specifies the image tag to build, default: latest')
@@ -199,10 +177,8 @@ def rebuild(project, tag):
     """
     Dockext(project=project, tag=tag).rebuild()
 
-bag8.add_command(rebuild)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project', default=cwdname)
 @click.option('--develop', default=False, is_flag=True,
               help='Start the containers in develop mode. default: False.')
@@ -229,10 +205,8 @@ def render(project, develop, environment, links, ports, user, volumes,
         .render(environment, links, ports, user, volumes, no_volumes, prefix)
     )
 
-bag8.add_command(render)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.option('-a', '--all', default=False, is_flag=True,
               help="Removes all corresponding containers if has more than one.")  # noqa
@@ -246,10 +220,8 @@ def rm(all, container, prefix, project):
     """
     Dockext(container=container, prefix=prefix, project=project).rm(all=all)
 
-bag8.add_command(rm)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.option('-t', '--tag', default='latest',
               help='Specifies the image tag to build, default: latest')
@@ -260,10 +232,8 @@ def rmi(project, tag):
     """
     Dockext(project=project, tag=tag).rmi()
 
-bag8.add_command(rmi)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.option('-c', '--command', default='bash',
               help='Specifies the run command, ex.: /bin/bash.')
@@ -293,10 +263,8 @@ def run(project, command, environment, links, ports, reuseyml, user, volumes,
            reuseyml=reuseyml, user=user, volumes=volumes,
            no_volumes=no_volumes, prefix=prefix).run(command=command)
 
-bag8.add_command(run)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.argument('container', default='')
 @click.option('-i', '--interactive', default=False, is_flag=True,
@@ -310,10 +278,8 @@ def start(container, interactive, prefix, project):
     """
     Dockext(container=container, prefix=prefix, project=project).start(interactive=interactive)  # noqa
 
-bag8.add_command(start)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project', default=cwdname)
 @click.argument('container', default='')
 @click.option('-p', '--prefix', default=PREFIX,
@@ -325,10 +291,8 @@ def stop(container, prefix, project):
     """
     Dockext(container=container, prefix=prefix, project=project).stop()
 
-bag8.add_command(stop)
 
-
-@click.command()
+@bag8.command()
 @click.argument('project')
 @click.option('-d', '--daemon', default=False, is_flag=True,
               help='Start the containers in the background and leave them running, default: False.')  # noqa
@@ -360,8 +324,6 @@ def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
     Figext(project, environment=environment, links=links, ports=ports,
            prefix=prefix, reuseyml=reuseyml, user=user, volumes=volumes,
            no_volumes=no_volumes, develop_mode=develop).up(daemon=daemon)
-
-bag8.add_command(up)
 
 
 @bag8.command()
