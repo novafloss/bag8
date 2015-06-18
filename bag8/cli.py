@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os.path
 import logging
+from subprocess import check_call
 
 import click
 
@@ -373,14 +374,14 @@ def develop(project):
         container = get_container_name(project)
     except SystemExit:
         # get_container_name calls sys.exit...
-        logging.info("Running new instance")
-        Figext(project, develop_mode=True).run(command='bash')
-    else:
-        container = Dockext(container=container, project=project)
-        data = container.inspect_live()
-        if data[0]['State']['Running']:
-            logging.info("Create new shell")
-            container.exec_(interactive=True)
-        else:
-            logging.info("Restarting instance")
-            container.start(interactive=True)
+        logging.info("Spawning new instance in background")
+        check_call(['bag8', 'up', '--daemon', '--develop', project])
+        container = get_container_name(project)
+
+    container = Dockext(container=container, project=project)
+    data = container.inspect_live()
+    if not data[0]['State']['Running']:
+        logging.info("Restarting instance")
+        check_call(['bag8', 'start', project])
+
+    container.exec_(interactive=True)
