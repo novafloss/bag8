@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import os.path
+import logging
 
 import click
 
@@ -362,11 +363,14 @@ def develop(project):
         container = get_container_name(project)
     except SystemExit:
         # get_container_name calls sys.exit...
+        logging.info("Running new instance")
         Figext(project, develop_mode=True).run(command='bash')
     else:
         container = Dockext(container=container, project=project)
         data = container.inspect_live()
         if data[0]['State']['Running']:
+            logging.info("Create new shell")
             container.exec_(interactive=True)
         else:
+            logging.info("Restarting instance")
             container.start(interactive=True)
