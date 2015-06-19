@@ -72,7 +72,8 @@ def get_container_name(project, prefix=PREFIX):
     return containers[0]
 
 
-def get_customized_yml(project, ports=True, no_volumes=False):
+def get_customized_yml(project, ports=True, no_volumes=False,
+                       develop=False):
     """Prefixes project sections with project name, ex: pg > busyboxpg.
     """
 
@@ -84,6 +85,24 @@ def get_customized_yml(project, ports=True, no_volumes=False):
         return custom_yml
 
     for k, v in yaml.load(open(yml_path)).items():
+        if 'dev_environment' in v and develop:
+            # ensure key
+            if 'environment' not in v:
+                v['environment'] = []
+            v['environment'].extend(v.get('dev_environment', []))
+        # clean dev section
+        if 'dev_environment' in v:
+            del v['dev_environment']
+        # only for the working app
+        if 'dev_volumes' in v and develop and k == 'app':
+            # ensure key
+            if 'volumes' not in v:
+                v['volumes'] = []
+            for l in v.get('dev_volumes', []):
+                v['volumes'].append(l % os.environ)
+        # clean dev volumes
+        if 'dev_volumes' in v:
+            del v['dev_volumes']
         # remove ports if has one but is not expected
         if 'ports' in v and not ports:
             del v['ports']
@@ -227,13 +246,14 @@ def json_check(environment, links, volumes):
 
 def render_yml(project, environment=None, links=None, ports=True, user=None,
                volumes=None, no_volumes=False, prefix=PREFIX,
-               develop_mode=False):
+               develop=False):
 
     environment = environment if isinstance(environment, list) else []
     links = links if isinstance(links, list) else []
     volumes = volumes if not no_volumes and isinstance(volumes, list) else []
 
-    yml_dict = update_yml_dict({}, project, ports=ports, no_volumes=no_volumes)
+    yml_dict = update_yml_dict({}, project, ports=ports, no_volumes=no_volumes,
+                               develop=develop)
 
     # ensure good app name
     app = simple_name(project)
@@ -243,14 +263,6 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
     app_section['environment'] = \
         app_section.get('environment', []) \
         + environment
-
-    if develop_mode:
-        app_section['environment'].extend(
-            app_section.get('dev_environment', []))
-
-    # clean dev section
-    if 'dev_environment' in app_section:
-        del app_section['dev_environment']
 
     # updates links
     app_section['links'] = yml_dict[app].get('links', []) \
@@ -265,13 +277,6 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
     # updates volumes
     app_section['volumes'] = yml_dict[app].get('volumes', []) \
         + volumes
-
-    if develop_mode:
-        for v in app_section.get('dev_volumes', []):
-            app_section['volumes'].append(v % os.environ)
-    # clean custom section
-    if 'dev_volumes' in app_section:
-        del app_section['dev_volumes']
 
     # set user if not has one
     if user and 'user' not in app_section:
@@ -386,14 +391,17 @@ def update_local_hosts(hosts_list):
         raise Exception("Failed to update local hosts")
 
 
-def update_yml_dict(yml_dict, project, ports=True, no_volumes=False):
+def update_yml_dict(yml_dict, project, ports=True, no_volumes=False,
+                    develop=False):
 
     for d in iter_deps(project):
         yml_dict = update_yml_dict(yml_dict, d, ports=ports,
-                                   no_volumes=no_volumes)
+                                   no_volumes=no_volumes,
+                                   develop=develop)
 
     yml_dict.update(get_customized_yml(project, ports=ports,
-                                       no_volumes=no_volumes))
+                                       no_volumes=no_volumes,
+                                       develop=develop))
 
     return yml_dict
 

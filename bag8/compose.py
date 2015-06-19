@@ -14,10 +14,10 @@ class Figext(Bag8Mixin):
 
     def __init__(self, project, environment=None, links=None, ports=True,
                  reuseyml=False, user=None, volumes=None, no_volumes=False,
-                 prefix=PREFIX, develop_mode=False):
+                 prefix=PREFIX, develop=False):
         super(Figext, self).__init__(prefix=prefix, project=project)
 
-        self.develop_mode = develop_mode
+        self.develop = develop
         self.name = simple_name(self.project)
         self.no_volumes = no_volumes
         self.ports = ports
@@ -29,7 +29,7 @@ class Figext(Bag8Mixin):
         self.links = links or []
         self.volumes = volumes or []
 
-    def call(self, action, extra_args=None):
+    def call(self, action, extra_args=None, call_func=exec_):
         extra_args = extra_args if isinstance(extra_args, list) else []
 
         # generate yml file
@@ -37,7 +37,7 @@ class Figext(Bag8Mixin):
             render_yml(self.project, environment=self.environment,
                        links=self.links, ports=self.ports, user=self.user,
                        volumes=self.volumes, no_volumes=self.no_volumes,
-                       prefix=self.prefix, develop_mode=self.develop_mode)
+                       prefix=self.prefix, develop=self.develop)
 
         # we work in an insecure environment by default
         extra_args.insert(0, '--allow-insecure-ssl')
@@ -50,16 +50,16 @@ class Figext(Bag8Mixin):
         ] + extra_args
 
         # run command in a more simple way
-        exec_('docker-compose {0}'.format(' '.join(args)))
+        call_func('docker-compose {0}'.format(' '.join(args)))
 
     def run(self, command='bash'):
         self.call('run', [self.name, command])
 
-    def up(self, daemon=False):
+    def up(self, daemon=False, call_func=exec_):
         args = ['--no-recreate']
         if daemon:
             args.append('-d')
-        self.call('up', args)
+        self.call('up', args, call_func=call_func)
 
     def pull(self):
         self.call('pull')
