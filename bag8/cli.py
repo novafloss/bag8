@@ -349,7 +349,7 @@ def develop(project, prefix, reuseyml, user):
     except SystemExit:
         click.echo("Spawning new instance in background")
         Figext(project, develop=True, prefix=prefix, reuseyml=reuseyml,
-               user=user).up(daemon=True, call_func=call)
+               user=user).up(daemon=True, exit=False)
         container = get_container_name(project, prefix=prefix)
 
     dockext = Dockext(container=container, prefix=prefix, project=project)
@@ -357,7 +357,7 @@ def develop(project, prefix, reuseyml, user):
     # start in bg if not running yet
     if not dockext.inspect_live()[0]['State']['Running']:
         click.echo("Restarting instance")
-        dockext.start(call_func=call)
+        dockext.start(exit=False)
 
     # enter in it
     dockext.exec_(interactive=True)

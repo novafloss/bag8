@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 from bag8.common import PREFIX
 
+from bag8.common import call
 from bag8.common import exec_
 from bag8.common import simple_name
 from bag8.common import Bag8Mixin
@@ -29,7 +30,7 @@ class Figext(Bag8Mixin):
         self.links = links or []
         self.volumes = volumes or []
 
-    def call(self, action, extra_args=None, call_func=exec_):
+    def call(self, action, extra_args=None, exit=True):
         extra_args = extra_args if isinstance(extra_args, list) else []
 
         # generate yml file
@@ -50,16 +51,17 @@ class Figext(Bag8Mixin):
         ] + extra_args
 
         # run command in a more simple way
+        call_func = exec_ if exit else call
         call_func('docker-compose {0}'.format(' '.join(args)))
 
     def run(self, command='bash'):
         self.call('run', [self.name, command])
 
-    def up(self, daemon=False, call_func=exec_):
+    def up(self, daemon=False, exit=True):
         args = ['--no-recreate']
         if daemon:
             args.append('-d')
-        self.call('up', args, call_func=call_func)
+        self.call('up', args, exit=exit)
 
     def pull(self):
         self.call('pull')
