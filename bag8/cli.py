@@ -365,24 +365,13 @@ bag8.add_command(up)
 
 @bag8.command()
 @click.argument('project', default=cwdname)
-@click.option('-e', '--environment', default='',
-              help='Environment variables to pass to the container, ex: \'["BRANCH=master", "RUN=test"]\'.')  # noqa
-@click.option('-l', '--links', default='',
-              help='Links list to link with the main app container, ex: \'["app:app.local"]\'.')  # noqa
-@click.option('--ports/--no-ports', default=True,
-              help="Expose ports or not, default: True")
+@click.option('-p', '--prefix', default=PREFIX,
+              help="Prefix name of containers.")
 @click.option('-r', '--reuseyml', default=False, is_flag=True,
               help="Reuse previous generated fig.yml file, default: False")
 @click.option('-u', '--user', default=None,
               help='Specifies the user for the app to run, ex: root.')  # noqa
-@click.option('-v', '--volumes', default='',
-              help='Volumes list to mount into the container, ex: \'["/tmp:/home/src"]\'.')  # noqa
-@click.option('--no-volumes', default=False, is_flag=True,
-              help="Skip volumes if not necessary.")
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-def develop(project, environment, links, ports, prefix, reuseyml, user,
-            volumes, no_volumes):
+def develop(project, prefix, reuseyml, user):
     """Drop you in develop environment of your project."""
 
     # stop other prefix containers to avoid addr in use conflict
@@ -397,10 +386,8 @@ def develop(project, environment, links, ports, prefix, reuseyml, user,
         container = get_container_name(project, prefix=prefix)
     except SystemExit:
         click.echo("Spawning new instance in background")
-        Figext(project, environment=environment, links=links, ports=ports,
-               prefix=prefix, reuseyml=reuseyml, user=user, volumes=volumes,
-               no_volumes=no_volumes, develop=True).up(daemon=True,
-                                                       call_func=call)
+        Figext(project, develop=True, prefix=prefix, reuseyml=reuseyml,
+               user=user).up(daemon=True, call_func=call)
         container = get_container_name(project, prefix=prefix)
 
     dockext = Dockext(container=container, prefix=prefix, project=project)
