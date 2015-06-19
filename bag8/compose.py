@@ -29,7 +29,7 @@ class Figext(Bag8Mixin):
         self.links = links or []
         self.volumes = volumes or []
 
-    def call(self, action, extra_args=None):
+    def call(self, action, extra_args=None, call_func=exec_):
         extra_args = extra_args if isinstance(extra_args, list) else []
 
         # generate yml file
@@ -50,16 +50,16 @@ class Figext(Bag8Mixin):
         ] + extra_args
 
         # run command in a more simple way
-        exec_('docker-compose {0}'.format(' '.join(args)))
+        call_func('docker-compose {0}'.format(' '.join(args)))
 
     def run(self, command='bash'):
         self.call('run', [self.name, command])
 
-    def up(self, daemon=False):
+    def up(self, daemon=False, call_func=exec_):
         args = ['--no-recreate']
         if daemon:
             args.append('-d')
-        self.call('up', args)
+        self.call('up', args, call_func=call_func)
 
     def pull(self):
         self.call('pull')

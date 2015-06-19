@@ -399,7 +399,8 @@ def develop(project, environment, links, ports, prefix, reuseyml, user,
         click.echo("Spawning new instance in background")
         Figext(project, environment=environment, links=links, ports=ports,
                prefix=prefix, reuseyml=reuseyml, user=user, volumes=volumes,
-               no_volumes=no_volumes, develop=True).up(daemon=True)
+               no_volumes=no_volumes, develop=True).up(daemon=True,
+                                                       call_func=call)
         container = get_container_name(project, prefix=prefix)
 
     dockext = Dockext(container=container, prefix=prefix, project=project)
