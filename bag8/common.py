@@ -93,7 +93,8 @@ def get_customized_yml(project, ports=True, no_volumes=False,
         # clean dev section
         if 'dev_environment' in v:
             del v['dev_environment']
-        if 'dev_volumes' in v and develop:
+        # only for the working app
+        if 'dev_volumes' in v and develop and k == 'app':
             # ensure key
             if 'volumes' not in v:
                 v['volumes'] = []
