@@ -85,7 +85,7 @@ def get_customized_yml(project, ports=True, no_volumes=False,
         return custom_yml
 
     for k, v in yaml.load(open(yml_path)).items():
-        if 'dev_environment' in v and develop:
+        if 'dev_environment' in v and develop and k == 'app':
             # ensure key
             if 'environment' not in v:
                 v['environment'] = []
