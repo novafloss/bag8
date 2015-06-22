@@ -126,6 +126,9 @@ def logs(container, prefix, project):
 def nginx(links, volumes):
     """Run nginx container linked with all available sites.
     """
+    # stop previous nginx
+    call('docker rm -f bag8_nginx_1')
+    # start a new one
     Tools().nginx(links=links, volumes=volumes)
 
 
