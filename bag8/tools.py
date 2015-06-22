@@ -6,6 +6,7 @@ import shutil
 
 from compose.cli.docker_client import docker_client
 
+from bag8.common import DOMAIN_SUFFIX
 from bag8.common import PREFIX
 from bag8.common import TMPFOLDER
 
@@ -15,11 +16,11 @@ from bag8.common import get_available_projects
 from bag8.common import get_container_name
 from bag8.common import get_bag8_path
 from bag8.common import get_site_projects
+from bag8.common import inspect
 from bag8.common import iter_containers
 from bag8.common import json_check
 from bag8.common import render_yml
-from bag8.common import update_container_hosts
-from bag8.common import update_local_hosts
+from bag8.common import update_resolve_conf
 
 
 class Tools(object):
@@ -28,48 +29,39 @@ class Tools(object):
         self.project = project
 
     def hosts(self):
-        """Updates your containers /etc/hosts and/or you local /etc/hosts.
-        """
-        hosts_list = []
-        user_dict = {}
 
-        # get the current list [(ip, domain)]
-        client = docker_client()
-        for name, container in iter_containers(client=client):
-            infos = client.inspect_container(container['Id'])
-            ip = infos['NetworkSettings']['IPAddress']
-            hostname = infos['Config']['Domainname']
-            user = infos['Config']['User'] or 'root'
-            if not hostname:
-                continue
-            hosts_list.append((ip, hostname))
-            user_dict[name] = user
+        running_containers = [c['Names'][0][1:]
+                              for c in docker_client().containers(all=True)]
 
-        # here s the current hosts
-        click.echo('hosts found:')
-        click.echo('----')
-        click.echo('\n'.join(['{0}\t{1}'.format(*h) for h in hosts_list]))
+        # dns running or run it ?
+        if 'dnsdock' not in running_containers:
+            call(' '.join([
+                'docker',
+                'run',
+                '-d',
+                '-v /var/run/docker.sock:/var/run/docker.sock',
+                '--name dnsdock',
+                '-p 172.17.42.1:53:53/udp',
+                'tonistiigi/dnsdock',
+                "-domain={0}".format(DOMAIN_SUFFIX)
+            ]))
+        # restart
+        elif not inspect('dnsdock')[0]['State']['Running']:
+            call(' '.join([
+                'docker',
+                'start',
+                'dnsdock',
+            ]))
+
+        # update resolve config
+        update_resolve_conf()
+
+        # notice
         click.echo('')
-
-        # update containers ?
-        click.echo("Update your containers /etc/hosts ?")
-        char = None
-        while char not in ['y', 'n']:
-            click.echo('Yes (y) or skip (n) ?')
-            char = click.getchar()
-        if char == 'y':
-            for name, __ in iter_containers(client=client):
-                update_container_hosts(hosts_list, name,
-                                       user_dict.get(name, 'root'))
-
-        # update local ?
-        click.echo("Update your local /etc/hosts ?")
-        char = None
-        while char not in ['y', 'n']:
-            click.echo('Yes (y) or no (n) ?')
-            char = click.getchar()
-        if char == 'y':
-            update_local_hosts(hosts_list)
+        click.echo('Please update your /etc/default/docker with:')
+        click.echo('DOCKER_OPTS="-bip 172.17.42.1/24 -dns 172.17.42.1 <your opts>')
+        click.echo('')
+        click.echo('Have Fun!')
 
     def projects(self):
         click.echo('\n'.join(get_available_projects()))

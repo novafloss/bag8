@@ -28,6 +28,7 @@ ACCOUNT = config.get('account', None)
 DOMAIN_SUFFIX = config.get('domain_suffix', 'local')
 PREFIX = config.get('prefix', 'bag8')
 REGISTRY = config.get('registry', None)
+DOCKER_IP = config.get('docker_ip', '172.17.42.1')
 DATA_PATHS = [
     '.'  # current dir before all
 ] + config.get('data_paths', [])
@@ -167,6 +168,14 @@ def get_temp_path(project, prefix=PREFIX):
     return os.path.join(TMPFOLDER, '{0}_{1}.yml'.format(prefix, project))
 
 
+def inspect(container):
+    return json.loads(subprocess.check_output([
+        'docker',
+        'inspect',
+        container
+    ]))
+
+
 def is_valid_project(project):
     return project in get_available_projects()
 
@@ -290,105 +299,60 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
     click.echo('{0}.yml was generated here: {1}'.format(project, temp_path))
 
 
-HOSTS_HEAD = '# -- bag8 hosts'
-HOSTS_FOOT = '# bag8 hosts --'
+def update_resolve_conf():
 
+    r_conf_path = '/etc/resolvconf/resolv.conf.d/head'
+    r_conf_entry = 'nameserver\t{0}'.format(DOCKER_IP)
 
-def _clean_hosts_content(hosts_list, content):
-    skip = False
-    hosts_to_keep = []
-    for l in content.strip().split('\n'):
-        l = l.strip()
-        # skip line like 'x.x.x.x    pg.local'
-        if [h for i, h in hosts_list if l.endswith(h)]:
-            continue
-        # start skip
-        if l == HOSTS_HEAD:
-            skip = True
-        # keep
-        if not skip:
-            hosts_to_keep.append(l)
-        # stop skip
-        if l == HOSTS_FOOT:
-            skip = False
-    return hosts_to_keep
+    # check already set
+    with open(r_conf_path) as f:
+        if [l for l in f.readlines() if DOCKER_IP in l.strip()]:
+            return
 
+    # here s the current entry
+    click.echo('# updates {0} with:'.format(r_conf_path))
+    click.echo(r_conf_entry)
+    # update head file ?
+    click.echo('')
+    click.echo('proceed ?')
+    char = None
+    while char not in ['y', 'n']:
+        click.echo('Yes (y) or no (n) ?')
+        char = click.getchar()
+    # quit
+    if char == 'n':
+        return
 
-def _new_hosts_content(hosts_list, hosts_to_keep):
-    return '\n'.join([
-        '\n'.join(hosts_to_keep),
-        HOSTS_HEAD,
-        '\n'.join(['{0}\t{1}'.format(*h) for h in hosts_list]),
-        HOSTS_FOOT,
-        '',
-    ])
-
-
-def update_container_hosts(hosts_list, container, user):
-
-    cmd = 'docker exec -i {0}'.format(container)
-    args = ['cat', '/etc/hosts']
-    click.echo(' '.join(cmd.split(' ') + args))
-
-    hosts_content = subprocess.check_output(cmd.split(' ') + args)
-    hosts_to_keep = _clean_hosts_content(hosts_list, hosts_content)
-    new_content = _new_hosts_content(hosts_list, hosts_to_keep)
-
-    args = [] if user == 'root' else [
-        'sudo',
-    ]
-    args += [
-        'tee',
-        '/etc/hosts',
-    ]
-
-    cmd = cmd.split() + args
-    click.echo(' '.join(cmd))
-    process = subprocess.Popen(
-        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    process.stdin.write(new_content)
-    process.stdin.close()
-    exit_code = process.wait()
-
-    if exit_code != 0:
-        raise Exception("Failed to update container hosts")
-
-
-def update_local_hosts(hosts_list):
-    # filter
-    with open('/etc/hosts') as f:
-        hosts_to_keep = _clean_hosts_content(hosts_list, f.read())
-
-    for idx, ip_domain in enumerate(hosts_list):
-        ip, domain = ip_domain
-        if domain != 'nginx.local':
-            continue
-        # get 'real' domains for nginx
-        domain = ' '.join(['{0}.{1}'.format(simple_name(p), DOMAIN_SUFFIX)
-                          for p in get_site_projects(running=True)])
-        # replace nginx.local with 'real' values
-        hosts_list[idx] = (ip, domain)
-
-    new_content = _new_hosts_content(hosts_list, hosts_to_keep)
-
-    click.echo('cp /etc/hosts /tmp/hosts.orig')
-    subprocess.call(['cp', '/etc/hosts', '/tmp/hosts.orig'])
+    click.echo('cp {0} /tmp/resolv.conf.d_head.orig')
+    subprocess.call(['cp', r_conf_path, '/tmp/resolv.conf.d_head.orig'])
 
     cmd = [
         'sudo',
         '--reset-timestamp',
         'tee',
-        '/etc/hosts',
+        r_conf_path,
     ]
     click.echo(' '.join(cmd))
-    process = subprocess.Popen(
-        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    process.stdin.write(new_content)
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                               stdout=subprocess.PIPE)
+    process.stdin.write(r_conf_entry)
+    process.stdin.write('\n')
     process.stdin.close()
     exit_code = process.wait()
 
     if exit_code != 0:
-        raise Exception("Failed to update local hosts")
+        raise Exception("Failed to update resolvconf")
+
+    cmd = [
+        'sudo',
+        'resolvconf',
+        '-u',
+    ]
+    click.echo(' '.join(cmd))
+    process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    exit_code = process.wait()
+    if exit_code != 0:
+        raise Exception("Failed to update resolvconf")
 
 
 def update_yml_dict(yml_dict, project, ports=True, no_volumes=False,

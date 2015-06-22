@@ -1,9 +1,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import click
-import json
 import os
-from subprocess import check_output
 
 from bag8.common import PREFIX
 from bag8.common import TMPFOLDER
@@ -14,6 +12,7 @@ from bag8.common import Bag8Mixin
 from bag8.common import get_container_name
 from bag8.common import get_dockerfile_path
 from bag8.common import get_image_name
+from bag8.common import inspect
 from bag8.common import iter_deps
 from bag8.common import iter_containers
 
@@ -58,8 +57,7 @@ class Dockext(Bag8Mixin):
         exec_('docker inspect {0}'.format(self.container))
 
     def inspect_live(self):
-        out = check_output(['docker', 'inspect', self.container])
-        return json.loads(out)
+        return inspect(self.container)
 
     def logs(self):
         exec_('docker logs -f {0}'.format(self.container))
