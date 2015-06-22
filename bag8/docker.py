@@ -130,6 +130,10 @@ runnning `docker build` you can edit it and add some step.
     def stop(self):
 
         for dep in iter_deps(self.project):
+            # already started ?
+            if dep not in [d for d in iter_containers(project=dep)]:
+                continue
+            # stop
             container = get_container_name(dep, prefix=self.prefix)
             call('docker stop {0}'.format(container))
 
