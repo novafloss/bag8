@@ -107,7 +107,7 @@ runnning `docker build` you can edit it and add some step.
     def rmi(self):
         exec_('docker rmi {0}'.format(self.image))
 
-    def start(self, interactive=False, call_func=exec_):
+    def start(self, interactive=False, exit=True):
 
         # check deps
         for dep in iter_deps(self.project):
@@ -118,6 +118,7 @@ runnning `docker build` you can edit it and add some step.
             container = get_container_name(dep, prefix=self.prefix)
             call('docker start {0}'.format(container))
 
+        call_func = exec_ if exit else call
         call_func('docker start {0} {1}'.format('-i ' if interactive else '',
                                                 self.container))
 
