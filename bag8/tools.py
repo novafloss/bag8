@@ -90,13 +90,15 @@ class Tools(object):
 
         containers = {n.split('_')[1]: n
                       for n, __ in iter_containers()}
-
+        dnsdock_alias = []
         volumes_from = []
 
         for project in get_site_projects(running=True):
             # shortcut
             name = simple_name(project)
             container_name = containers[name]
+            # update alias
+            dnsdock_alias.append('{0}.nginx.{1}'.format(name, DOMAIN_SUFFIX))
             # updates volumes from to share between site and nginx containers
             volumes_from.append(container_name)
             # add link to nginx
@@ -109,6 +111,7 @@ class Tools(object):
             'docker',
             'run',
             '-d',
+            '-e DNSDOCK_ALIAS={0}'.format(','.join(dnsdock_alias)),
             '--name {0}_nginx_1'.format(PREFIX),  # TODO get prefix from cli
             '-p', '0.0.0.0:80:80',
             '-p', '0.0.0.0:443:443',

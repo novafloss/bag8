@@ -109,6 +109,14 @@ def get_customized_yml(project, ports=True, no_volumes=False,
             del v['ports']
         if 'volumes' in v and no_volumes:
             del v['volumes']
+        # shortcuts
+        name = k if k != 'app' else simple_name(project)
+        domainname = v.get('domainname', '{0}.{1}'.format(name, DOMAIN_SUFFIX))
+        dnsdock_alias = 'DNSDOCK_ALIAS={0}'.format(domainname)
+        if dnsdock_alias not in v.get('environment', []):
+            if 'environment' not in v:
+                v['environment'] = []
+            v['environment'].append(dnsdock_alias)
         # update sections
         custom_yml[k if k != 'app' else simple_name(project)] = v
 
