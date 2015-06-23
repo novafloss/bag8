@@ -344,7 +344,7 @@ def develop(project, prefix, reuseyml, user):
         # stop
         call('docker stop {0}'.format(name))
 
-    container = get_container_name(project, prefix=prefix)
+    container = get_container_name(project, prefix=prefix, exit=False)
     if not container:
         click.echo("Spawning new instance in background")
         Figext(project, develop=True, prefix=prefix, reuseyml=reuseyml,
