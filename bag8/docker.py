@@ -56,9 +56,6 @@ class Dockext(Bag8Mixin):
     def inspect(self):
         exec_('docker inspect {0}'.format(self.container))
 
-    def inspect_live(self):
-        return inspect(self.container)
-
     def logs(self):
         exec_('docker logs -f {0}'.format(self.container))
 
