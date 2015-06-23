@@ -115,9 +115,9 @@ runnning `docker build` you can edit it and add some step.
             if dep in [d for d in iter_containers(project=dep)]:
                 continue
             # exist ?
-            try:
-                container = get_container_name(dep, prefix=self.prefix)
-            except SystemExit:
+            container = get_container_name(dep, prefix=self.prefix,
+                                           exist=False)
+            if not container:
                 click.echo('{0} not exist!'.format(dep))
                 continue
             # start
