@@ -111,11 +111,16 @@ runnning `docker build` you can edit it and add some step.
 
         # check deps
         for dep in iter_deps(self.project):
-            # started
+            # already started ?
             if dep in [d for d in iter_containers(project=dep)]:
                 continue
-            # start dependency
-            container = get_container_name(dep, prefix=self.prefix)
+            # exist ?
+            container = get_container_name(dep, prefix=self.prefix,
+                                           exist=False)
+            if not container:
+                click.echo('{0} not exist!'.format(dep))
+                continue
+            # start
             call('docker start {0}'.format(container))
 
         call_func = exec_ if exit else call
@@ -125,6 +130,10 @@ runnning `docker build` you can edit it and add some step.
     def stop(self):
 
         for dep in iter_deps(self.project):
+            # already started ?
+            if dep not in [d for d in iter_containers(project=dep)]:
+                continue
+            # stop
             container = get_container_name(dep, prefix=self.prefix)
             call('docker stop {0}'.format(container))
 

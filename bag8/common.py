@@ -56,18 +56,18 @@ def get_available_projects():
     return [p for __, p in iter_bag8_paths()]
 
 
-def get_container_name(project, prefix=PREFIX):
+def get_container_name(project, prefix=PREFIX, exit=True):
 
     containers = [n for n, c in iter_containers(all=True, prefix=prefix,
                                                 project=project)]
 
     if not containers:
         click.echo('no container found for: {0}'.format(project))
-        sys.exit(1)
+        return None if not exit else sys.exit(1)
 
     if len(containers) > 1:
         click.echo('more than one containers found: {0}'.format(' '.join(containers)))  # noqa
-        sys.exit(1)
+        return None if not exit else sys.exit(1)
 
     return containers[0]
 
