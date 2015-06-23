@@ -41,12 +41,51 @@ def call(cmd):
     subprocess.call(cmd.split())
 
 
+def confirm(msg):
+    click.echo('')
+    click.echo(msg)
+    click.echo('proceed ?')
+    char = None
+    while char not in ['y', 'n']:
+        click.echo('Yes (y) or no (n) ?')
+        char = click.getchar()
+    # Yes
+    if char == 'y':
+        return True
+
+
 def exec_(cmd):
     click.echo(cmd)
     args_ = cmd.split()
     path = find_executable(args_[0])
     # byebye!
     os.execv(path, args_)
+
+
+def write_conf(path, content, bak_path=None):
+
+    # keep
+    if bak_path:
+        call('cp {0} {1}'.format(path, bak_path))
+
+    cmd = [
+        'sudo',
+        '--reset-timestamp',
+        'tee',
+        path,
+    ]
+
+    # confirm
+    if not confirm('`{0}` ?'.format(' '.join(cmd))):
+        return
+
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                               stdout=subprocess.PIPE)
+    process.stdin.write(content)
+    process.stdin.close()
+    exit_code = process.wait()
+    if exit_code != 0:
+        raise Exception('Failed to update {0}'.format(path))
 
 
 def simple_name(text):
