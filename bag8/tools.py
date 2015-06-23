@@ -6,11 +6,16 @@ import shutil
 
 from compose.cli.docker_client import docker_client
 
+from docker.errors import APIError
+
+from bag8.common import DOCKER_IP
 from bag8.common import DOMAIN_SUFFIX
 from bag8.common import PREFIX
 from bag8.common import TMPFOLDER
 
 from bag8.common import call
+from bag8.common import confirm
+from bag8.common import write_conf
 from bag8.common import simple_name
 from bag8.common import get_available_projects
 from bag8.common import get_container_name
@@ -20,7 +25,6 @@ from bag8.common import inspect
 from bag8.common import iter_containers
 from bag8.common import json_check
 from bag8.common import render_yml
-from bag8.common import update_resolve_conf
 
 
 class Tools(object):
@@ -28,13 +32,46 @@ class Tools(object):
     def __init__(self, project=None):
         self.project = project
 
+    def _update_resolve_conf(self):
+
+        conf_path = '/etc/resolvconf/resolv.conf.d/head'
+        conf_entry = 'nameserver\t{0}'.format(DOCKER_IP)
+        conf_content = []
+
+        # check already set
+        with open(conf_path) as f:
+            conf_content += [l.strip() for l in f.readlines()]
+
+        if [l for l in conf_content if DOCKER_IP in l]:
+            return
+        conf_content.append(conf_entry)
+
+        click.echo("""
+# updates {0} with:
+{1}
+""".format(conf_path, conf_entry))
+
+        # update resolve config
+        write_conf(conf_path, '\n'.join(conf_content) + '\n',
+                   bak_path='/tmp/resolv.conf.d_head.orig')
+
+        if confirm('`sudo resolvconf -u` ?'):
+            call('sudo resolvconf -u')
+
     def hosts(self):
 
-        running_containers = [c['Names'][0][1:]
-                              for c in docker_client().containers(all=True)]
+        self._update_resolve_conf()
 
-        # dns running or run it ?
-        if 'dnsdock' not in running_containers:
+        # not running
+        try:
+            if not inspect('dnsdock')['State']['Running']:
+                call(' '.join([
+                    'docker',
+                    'start',
+                    'dnsdock',
+                ]))
+        # not exist
+        except APIError:
             call(' '.join([
                 'docker',
                 'run',
@@ -45,23 +82,6 @@ class Tools(object):
                 'tonistiigi/dnsdock',
                 "-domain={0}".format(DOMAIN_SUFFIX)
             ]))
-        # restart
-        elif not inspect('dnsdock')[0]['State']['Running']:
-            call(' '.join([
-                'docker',
-                'start',
-                'dnsdock',
-            ]))
-
-        # update resolve config
-        update_resolve_conf()
-
-        # notice
-        click.echo('')
-        click.echo('Please update your /etc/default/docker with:')
-        click.echo('DOCKER_OPTS="-bip 172.17.42.1/24 -dns 172.17.42.1 <your opts>')
-        click.echo('')
-        click.echo('Have Fun!')
 
     def projects(self):
         click.echo('\n'.join(get_available_projects()))

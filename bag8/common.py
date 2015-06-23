@@ -343,62 +343,6 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
     click.echo('{0}.yml was generated here: {1}'.format(project, temp_path))
 
 
-def update_resolve_conf():
-
-    r_conf_path = '/etc/resolvconf/resolv.conf.d/head'
-    r_conf_entry = 'nameserver\t{0}'.format(DOCKER_IP)
-
-    # check already set
-    with open(r_conf_path) as f:
-        if [l for l in f.readlines() if DOCKER_IP in l.strip()]:
-            return
-
-    # here s the current entry
-    click.echo('# updates {0} with:'.format(r_conf_path))
-    click.echo(r_conf_entry)
-    # update head file ?
-    click.echo('')
-    click.echo('proceed ?')
-    char = None
-    while char not in ['y', 'n']:
-        click.echo('Yes (y) or no (n) ?')
-        char = click.getchar()
-    # quit
-    if char == 'n':
-        return
-
-    click.echo('cp {0} /tmp/resolv.conf.d_head.orig')
-    subprocess.call(['cp', r_conf_path, '/tmp/resolv.conf.d_head.orig'])
-
-    cmd = [
-        'sudo',
-        '--reset-timestamp',
-        'tee',
-        r_conf_path,
-    ]
-    click.echo(' '.join(cmd))
-    process = subprocess.Popen(cmd, stdin=subprocess.PIPE,
-                               stdout=subprocess.PIPE)
-    process.stdin.write(r_conf_entry)
-    process.stdin.write('\n')
-    process.stdin.close()
-    exit_code = process.wait()
-
-    if exit_code != 0:
-        raise Exception("Failed to update resolvconf")
-
-    cmd = [
-        'sudo',
-        'resolvconf',
-        '-u',
-    ]
-    click.echo(' '.join(cmd))
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    exit_code = process.wait()
-    if exit_code != 0:
-        raise Exception("Failed to update resolvconf")
-
-
 def update_yml_dict(yml_dict, project, ports=True, no_volumes=False,
                     develop=False):
 
