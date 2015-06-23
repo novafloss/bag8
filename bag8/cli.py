@@ -357,7 +357,7 @@ def develop(project, prefix, reuseyml, user):
     dockext = Dockext(container=container, prefix=prefix, project=project)
 
     # start in bg if not running yet
-    if not dockext.inspect_live()[0]['State']['Running']:
+    if not dockext.inspect_live()['State']['Running']:
         click.echo("Restarting instance")
         dockext.start(exit=False)
 

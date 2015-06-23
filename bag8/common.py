@@ -176,12 +176,9 @@ def get_temp_path(project, prefix=PREFIX):
     return os.path.join(TMPFOLDER, '{0}_{1}.yml'.format(prefix, project))
 
 
-def inspect(container):
-    return json.loads(subprocess.check_output([
-        'docker',
-        'inspect',
-        container
-    ]))
+def inspect(container, client=None):
+    client = client or docker_client()
+    return client.inspect_container(container)
 
 
 def is_valid_project(project):
