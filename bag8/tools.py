@@ -72,30 +72,19 @@ class Tools(object):
             sleep(5)
 
     def _update_resolve_conf(self):
-
         conf_path = '/etc/resolvconf/resolv.conf.d/head'
-        conf_entry = 'nameserver\t{0}'.format(DOCKER_IP)
-        conf_content = []
-
-        # check already set
-        with open(conf_path) as f:
-            conf_content += [l.strip() for l in f.readlines()]
-
-        if [l for l in conf_content if DOCKER_IP in l]:
-            return
-        conf_content.append(conf_entry)
-
+        conf_entry = 'nameserver {0}'.format(DOCKER_IP)
         click.echo("""
-# updates {0} with:
+To resolve your container hosts locally, please update your {0} with:
+
 {1}
+
+Then refresh your resolv configuration with:
+
+# resolvconf -u
+
+Note: Do not forget to remove this settings if you do not need it.
 """.format(conf_path, conf_entry))
-
-        # update resolve config
-        write_conf(conf_path, '\n'.join(conf_content) + '\n',
-                   bak_path='/tmp/resolv.conf.d_head.orig')
-
-        if confirm('`sudo resolvconf -u` ?'):
-            call('sudo resolvconf -u')
 
     def hosts(self):
 
