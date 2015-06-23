@@ -2,9 +2,10 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import click
 import os
+import re
 import shutil
 
-from compose.cli.docker_client import docker_client
+from time import sleep
 
 from docker.errors import APIError
 
@@ -31,6 +32,44 @@ class Tools(object):
 
     def __init__(self, project=None):
         self.project = project
+
+    def _update_docker_conf(self):
+
+        conf_path = '/etc/default/docker'
+        conf_entry = '-bip 172.17.42.1/24 -dns 172.17.42.1'
+        conf_content = []
+
+        # check already set
+        with open(conf_path) as f:
+            conf_content += [l.strip() for l in f.readlines()]
+
+        # update content
+        opts = [conf_entry]
+        for i, l in enumerate(conf_content):
+            if not l.startswith('DOCKER_OPTS='):
+                continue
+            # has values we don't want to rewrite
+            if '-bip' in l or '-dns' in l:
+                return
+            # keep opts
+            opts.append(re.findall('^DOCKER_OPTS="(.*)"', l)[0])
+            # remove opts line
+            conf_content.remove(l)
+        # add new opts
+        conf_content.append('DOCKER_OPTS="{0}"'.format(' '.join(opts)))
+
+        click.echo("""
+# updates {0} with:
+{1}
+""".format(conf_path, conf_entry))
+
+        # update resolve config
+        write_conf(conf_path, '\n'.join(conf_content) + '\n',
+                   bak_path='/tmp/default.docker.orig')
+
+        if confirm('`sudo service docker restart` ?'):
+            call('sudo service docker restart')
+            sleep(5)
 
     def _update_resolve_conf(self):
 
@@ -61,6 +100,7 @@ class Tools(object):
     def hosts(self):
 
         self._update_resolve_conf()
+        self._update_docker_conf()
 
         # not running
         try:
