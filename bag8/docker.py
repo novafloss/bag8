@@ -116,7 +116,7 @@ runnning `docker build` you can edit it and add some step.
                 continue
             # exist ?
             container = get_container_name(dep, prefix=self.prefix,
-                                           exist=False)
+                                           exit=False)
             if not container:
                 click.echo('{0} not exist!'.format(dep))
                 continue
