@@ -34,7 +34,7 @@ class Tools(object):
     def __init__(self, project=None):
         self.project = project
 
-    def _update_docker_conf(self):
+    def update_docker_conf(self):
 
         conf_path = '/etc/default/docker'
         conf_entry = '-bip 172.17.42.1/24 -dns 172.17.42.1'
@@ -72,7 +72,7 @@ class Tools(object):
             call('sudo service docker restart')
             sleep(5)
 
-    def _update_dnsmasq_conf(self):
+    def update_dnsmasq_conf(self):
 
         conf_path = '/etc/dnsmasq.d/50-bag8'
         if os.path.exists(conf_path):
@@ -89,19 +89,12 @@ server=/{1}/{2}
 {1}
 """.format(conf_path, conf_content).strip())
 
-        # update resolve config
+        # update dnsmasq config
         write_conf(conf_path, conf_content + '\n')
 
         if confirm('`sudo service dnsmasq restart` ?'):
             call('sudo service dnsmasq restart')
             sleep(5)
-
-    def hosts(self):
-
-        self._update_dnsmasq_conf()
-        self._update_docker_conf()
-
-        self.dns()
 
     def dns(self):
 

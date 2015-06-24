@@ -1,10 +1,14 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import os.path
+from socket import gaierror
+from socket import getaddrinfo
+import sys
 
 import click
 
 from bag8.common import PREFIX
+from bag8.common import DOMAIN_SUFFIX
 from bag8.common import call
 from bag8.common import get_container_name
 from bag8.docker import Dockext
@@ -83,12 +87,25 @@ def exec_(container, command, interactive, prefix, project):
 
 
 @bag8.command()
-def hosts():
-    """Updates /etc/hosts for containers and host
+def setup():
+    """Setup docker and dnsmasq."""
+    Tools().update_dnsmasq_conf()
+    Tools().update_docker_conf()
+    Tools().dns()
 
-    $ bag8 hosts
-    """
-    Tools().hosts()
+    try:
+        getaddrinfo('dnsdock.' + DOMAIN_SUFFIX, 53)
+    except gaierror:
+        click.echo("docker DNS resolution fails!")
+        sys.exit(1)
+    else:
+        click.echo("docker DNS resolution is ready.")
+
+
+@bag8.command()
+def dns():
+    """Start or restart docker DNS server."""
+    Tools().dns()
 
 
 @bag8.command()
