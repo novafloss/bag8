@@ -103,6 +103,12 @@ def setup():
 
 
 @bag8.command()
+def dns():
+    """Start or restart docker DNS server."""
+    Tools().dns()
+
+
+@bag8.command()
 @click.argument('project')
 @click.argument('container', default='')
 @click.option('-p', '--prefix', default=PREFIX,
