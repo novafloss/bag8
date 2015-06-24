@@ -92,12 +92,11 @@ runnning `docker build` you can edit it and add some step.
                                                     dockerfile_path))
 
     def rm(self, all=False):
-        if all:
-            containers = self.get_containers()
-        else:
-            containers = [self.container]
-        for c in containers:
-            call('docker rm -f {0}'.format(c))
+        projects = [self.project] + [p for p in iter_deps(self.project)]
+        for p in projects:
+            for container, _ in iter_containers(all=all, project=p,
+                                                prefix=self.prefix):
+                call('docker rm -f {0}'.format(container))
 
     def rmi(self):
         exec_('docker rmi {0}'.format(self.image))
@@ -123,13 +122,11 @@ runnning `docker build` you can edit it and add some step.
                                                 self.container))
 
     def stop(self):
-
         for dep in iter_deps(self.project):
-            # already started ?
-            if dep not in [d for d in iter_containers(project=dep)]:
-                continue
-            # stop
-            container = get_container_name(dep, prefix=self.prefix)
-            call('docker stop {0}'.format(container))
+            try:
+                container = get_container_name(dep, prefix=self.prefix)
+                call('docker stop {0}'.format(container))
+            except SystemExit:
+                pass
 
         exec_('docker stop {0}'.format(self.container))

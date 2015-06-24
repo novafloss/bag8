@@ -7,7 +7,6 @@ import click
 from bag8.common import PREFIX
 from bag8.common import call
 from bag8.common import get_container_name
-from bag8.common import iter_containers
 from bag8.docker import Dockext
 from bag8.compose import Figext
 from bag8.tools import Tools
@@ -209,7 +208,7 @@ def render(project, develop, environment, links, ports, user, volumes,
 
 
 @bag8.command()
-@click.argument('project')
+@click.argument('project', default=cwdname)
 @click.option('-a', '--all', default=False, is_flag=True,
               help="Removes all corresponding containers if has more than one.")  # noqa
 @click.option('-p', '--prefix', default=PREFIX,

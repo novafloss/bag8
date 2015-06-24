@@ -242,7 +242,13 @@ def iter_containers(all=False, client=None, prefix=PREFIX, project=''):
         yield name[0][1:], c
 
 
-def iter_deps(project):
+def iter_deps(project, __wrap=True):
+
+    if __wrap:
+        # uniqify deps
+        for p in set([p for p in iter_deps(project, __wrap=False)]):
+            yield p
+        raise StopIteration()
 
     yml_path = os.path.join(get_bag8_path(project), 'fig.yml')
     project_yml = yaml.load(open(yml_path))
@@ -253,6 +259,8 @@ def iter_deps(project):
         link = item.split(':')[0]
         if link in internal_links:
             continue
+        for dep in iter_deps(link, __wrap=False):
+            yield dep
         yield link
 
 
