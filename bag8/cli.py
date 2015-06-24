@@ -7,7 +7,6 @@ import click
 from bag8.common import PREFIX
 from bag8.common import call
 from bag8.common import get_container_name
-from bag8.common import iter_containers
 from bag8.docker import Dockext
 from bag8.compose import Figext
 from bag8.tools import Tools
