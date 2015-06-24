@@ -209,7 +209,7 @@ def render(project, develop, environment, links, ports, user, volumes,
 
 
 @bag8.command()
-@click.argument('project')
+@click.argument('project', default=cwdname)
 @click.option('-a', '--all', default=False, is_flag=True,
               help="Removes all corresponding containers if has more than one.")  # noqa
 @click.option('-p', '--prefix', default=PREFIX,
