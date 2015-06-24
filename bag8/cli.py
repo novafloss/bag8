@@ -338,6 +338,8 @@ def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
 def develop(project, prefix, reuseyml, user):
     """Drop you in develop environment of your project."""
 
+    Tools().dns()
+
     container = get_container_name(project, prefix=prefix, exit=False)
     if not container:
         click.echo("Spawning new instance in background")
