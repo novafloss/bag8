@@ -157,6 +157,9 @@ def get_customized_yml(project, ports=True, no_volumes=False,
             if 'environment' not in v:
                 v['environment'] = []
             v['environment'].append(dnsdock_alias)
+
+        v['environment'].append('DNSDOCK_IMAGE=')
+
         # update sections
         custom_yml[k if k != 'app' else simple_name(project)] = v
 

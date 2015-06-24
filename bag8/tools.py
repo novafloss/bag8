@@ -101,6 +101,10 @@ server=/{1}/{2}
         self._update_dnsmasq_conf()
         self._update_docker_conf()
 
+        self.dns()
+
+    def dns(self):
+
         # not running
         try:
             if not inspect('dnsdock')['State']['Running']:
