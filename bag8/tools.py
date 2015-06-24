@@ -61,7 +61,7 @@ class Tools(object):
         click.echo("""
 # updates {0} with:
 {1}
-""".format(conf_path, conf_entry))
+""".format(conf_path, conf_entry).strip())
 
         # update resolve config
         write_conf(conf_path, '\n'.join(conf_content) + '\n',
