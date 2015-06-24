@@ -339,14 +339,6 @@ def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
 def develop(project, prefix, reuseyml, user):
     """Drop you in develop environment of your project."""
 
-    # stop other prefix containers to avoid addr in use conflict
-    for name, data in iter_containers(prefix='.*'):
-        # ok no conflict
-        if name.startswith(prefix):
-            continue
-        # stop
-        call('docker stop {0}'.format(name))
-
     container = get_container_name(project, prefix=prefix, exit=False)
     if not container:
         click.echo("Spawning new instance in background")
