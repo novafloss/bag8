@@ -28,6 +28,7 @@ ACCOUNT = config.get('account', None)
 DOMAIN_SUFFIX = config.get('domain_suffix', 'local')
 PREFIX = config.get('prefix', 'bag8')
 REGISTRY = config.get('registry', None)
+DOCKER_INTERFACE = config.get('docker_interface', 'docker0')
 DOCKER_IP = config.get('docker_ip', '172.17.42.1')
 DATA_PATHS = [
     '.'  # current dir before all

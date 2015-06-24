@@ -9,6 +9,7 @@ from time import sleep
 
 from docker.errors import APIError
 
+from bag8.common import DOCKER_INTERFACE
 from bag8.common import DOCKER_IP
 from bag8.common import DOMAIN_SUFFIX
 from bag8.common import PREFIX
@@ -71,24 +72,33 @@ class Tools(object):
             call('sudo service docker restart')
             sleep(5)
 
-    def _update_resolve_conf(self):
-        conf_path = '/etc/resolvconf/resolv.conf.d/head'
-        conf_entry = 'nameserver {0}'.format(DOCKER_IP)
+    def _update_dnsmasq_conf(self):
+
+        conf_path = '/etc/dnsmasq.d/50-bag8'
+        if os.path.exists(conf_path):
+            return
+
+        conf_content = """
+except-interface={0}
+bind-interfaces
+server=/{1}/{2}
+""".format(DOCKER_INTERFACE, DOMAIN_SUFFIX, DOCKER_IP).strip()
+
         click.echo("""
-To resolve your container hosts locally, please update your {0} with:
-
+# updates {0} with:
 {1}
+""".format(conf_path, conf_content).strip())
 
-Then refresh your resolv configuration with:
+        # update resolve config
+        write_conf(conf_path, conf_content + '\n')
 
-# resolvconf -u
-
-Note: Do not forget to remove this settings if you do not need it.
-""".format(conf_path, conf_entry))
+        if confirm('`sudo service dnsmasq restart` ?'):
+            call('sudo service dnsmasq restart')
+            sleep(5)
 
     def hosts(self):
 
-        self._update_resolve_conf()
+        self._update_dnsmasq_conf()
         self._update_docker_conf()
 
         # not running
