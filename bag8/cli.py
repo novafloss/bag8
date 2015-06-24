@@ -126,6 +126,9 @@ def logs(container, prefix, project):
 def nginx(links, volumes):
     """Run nginx container linked with all available sites.
     """
+    # stop previous nginx
+    call('docker rm -f bag8_nginx_1')
+    # start a new one
     Tools().nginx(links=links, volumes=volumes)
 
 
@@ -354,7 +357,8 @@ def develop(project, prefix, reuseyml, user):
     dockext = Dockext(container=container, prefix=prefix, project=project)
 
     # start in bg if not running yet
-    if not dockext.inspect_live()[0]['State']['Running']:
+    from bag8.common import inspect as _inspect
+    if not _inspect(container)['State']['Running']:
         click.echo("Restarting instance")
         dockext.start(exit=False)
 

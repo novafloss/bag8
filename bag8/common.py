@@ -28,6 +28,8 @@ ACCOUNT = config.get('account', None)
 DOMAIN_SUFFIX = config.get('domain_suffix', 'local')
 PREFIX = config.get('prefix', 'bag8')
 REGISTRY = config.get('registry', None)
+DOCKER_INTERFACE = config.get('docker_interface', 'docker0')
+DOCKER_IP = config.get('docker_ip', '172.17.42.1')
 DATA_PATHS = [
     '.'  # current dir before all
 ] + config.get('data_paths', [])
@@ -40,12 +42,51 @@ def call(cmd):
     subprocess.call(cmd.split())
 
 
+def confirm(msg):
+    click.echo('')
+    click.echo(msg)
+    click.echo('proceed ?')
+    char = None
+    while char not in ['y', 'n']:
+        click.echo('Yes (y) or no (n) ?')
+        char = click.getchar()
+    # Yes
+    if char == 'y':
+        return True
+
+
 def exec_(cmd):
     click.echo(cmd)
     args_ = cmd.split()
     path = find_executable(args_[0])
     # byebye!
     os.execv(path, args_)
+
+
+def write_conf(path, content, bak_path=None):
+
+    # keep
+    if bak_path:
+        call('cp {0} {1}'.format(path, bak_path))
+
+    cmd = [
+        'sudo',
+        '--reset-timestamp',
+        'tee',
+        path,
+    ]
+
+    # confirm
+    if not confirm('`{0}` ?'.format(' '.join(cmd))):
+        return
+
+    process = subprocess.Popen(cmd, stdin=subprocess.PIPE,
+                               stdout=subprocess.PIPE)
+    process.stdin.write(content)
+    process.stdin.close()
+    exit_code = process.wait()
+    if exit_code != 0:
+        raise Exception('Failed to update {0}'.format(path))
 
 
 def simple_name(text):
@@ -108,6 +149,14 @@ def get_customized_yml(project, ports=True, no_volumes=False,
             del v['ports']
         if 'volumes' in v and no_volumes:
             del v['volumes']
+        # shortcuts
+        name = k if k != 'app' else simple_name(project)
+        domainname = v.get('domainname', '{0}.{1}'.format(name, DOMAIN_SUFFIX))
+        dnsdock_alias = 'DNSDOCK_ALIAS={0}'.format(domainname)
+        if dnsdock_alias not in v.get('environment', []):
+            if 'environment' not in v:
+                v['environment'] = []
+            v['environment'].append(dnsdock_alias)
         # update sections
         custom_yml[k if k != 'app' else simple_name(project)] = v
 
@@ -165,6 +214,11 @@ def get_temp_path(project, prefix=PREFIX):
         os.makedirs(TMPFOLDER)
 
     return os.path.join(TMPFOLDER, '{0}_{1}.yml'.format(prefix, project))
+
+
+def inspect(container, client=None):
+    client = client or docker_client()
+    return client.inspect_container(container)
 
 
 def is_valid_project(project):
@@ -288,107 +342,6 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
         out_yml.write(yaml.safe_dump(yml_dict))
 
     click.echo('{0}.yml was generated here: {1}'.format(project, temp_path))
-
-
-HOSTS_HEAD = '# -- bag8 hosts'
-HOSTS_FOOT = '# bag8 hosts --'
-
-
-def _clean_hosts_content(hosts_list, content):
-    skip = False
-    hosts_to_keep = []
-    for l in content.strip().split('\n'):
-        l = l.strip()
-        # skip line like 'x.x.x.x    pg.local'
-        if [h for i, h in hosts_list if l.endswith(h)]:
-            continue
-        # start skip
-        if l == HOSTS_HEAD:
-            skip = True
-        # keep
-        if not skip:
-            hosts_to_keep.append(l)
-        # stop skip
-        if l == HOSTS_FOOT:
-            skip = False
-    return hosts_to_keep
-
-
-def _new_hosts_content(hosts_list, hosts_to_keep):
-    return '\n'.join([
-        '\n'.join(hosts_to_keep),
-        HOSTS_HEAD,
-        '\n'.join(['{0}\t{1}'.format(*h) for h in hosts_list]),
-        HOSTS_FOOT,
-        '',
-    ])
-
-
-def update_container_hosts(hosts_list, container, user):
-
-    cmd = 'docker exec -i {0}'.format(container)
-    args = ['cat', '/etc/hosts']
-    click.echo(' '.join(cmd.split(' ') + args))
-
-    hosts_content = subprocess.check_output(cmd.split(' ') + args)
-    hosts_to_keep = _clean_hosts_content(hosts_list, hosts_content)
-    new_content = _new_hosts_content(hosts_list, hosts_to_keep)
-
-    args = [] if user == 'root' else [
-        'sudo',
-    ]
-    args += [
-        'tee',
-        '/etc/hosts',
-    ]
-
-    cmd = cmd.split() + args
-    click.echo(' '.join(cmd))
-    process = subprocess.Popen(
-        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    process.stdin.write(new_content)
-    process.stdin.close()
-    exit_code = process.wait()
-
-    if exit_code != 0:
-        raise Exception("Failed to update container hosts")
-
-
-def update_local_hosts(hosts_list):
-    # filter
-    with open('/etc/hosts') as f:
-        hosts_to_keep = _clean_hosts_content(hosts_list, f.read())
-
-    for idx, ip_domain in enumerate(hosts_list):
-        ip, domain = ip_domain
-        if domain != 'nginx.local':
-            continue
-        # get 'real' domains for nginx
-        domain = ' '.join(['{0}.{1}'.format(simple_name(p), DOMAIN_SUFFIX)
-                          for p in get_site_projects(running=True)])
-        # replace nginx.local with 'real' values
-        hosts_list[idx] = (ip, domain)
-
-    new_content = _new_hosts_content(hosts_list, hosts_to_keep)
-
-    click.echo('cp /etc/hosts /tmp/hosts.orig')
-    subprocess.call(['cp', '/etc/hosts', '/tmp/hosts.orig'])
-
-    cmd = [
-        'sudo',
-        '--reset-timestamp',
-        'tee',
-        '/etc/hosts',
-    ]
-    click.echo(' '.join(cmd))
-    process = subprocess.Popen(
-        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    process.stdin.write(new_content)
-    process.stdin.close()
-    exit_code = process.wait()
-
-    if exit_code != 0:
-        raise Exception("Failed to update local hosts")
 
 
 def update_yml_dict(yml_dict, project, ports=True, no_volumes=False,

@@ -2,24 +2,31 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import click
 import os
+import re
 import shutil
 
-from compose.cli.docker_client import docker_client
+from time import sleep
 
+from docker.errors import APIError
+
+from bag8.common import DOCKER_INTERFACE
+from bag8.common import DOCKER_IP
+from bag8.common import DOMAIN_SUFFIX
 from bag8.common import PREFIX
 from bag8.common import TMPFOLDER
 
 from bag8.common import call
+from bag8.common import confirm
+from bag8.common import write_conf
 from bag8.common import simple_name
 from bag8.common import get_available_projects
 from bag8.common import get_container_name
 from bag8.common import get_bag8_path
 from bag8.common import get_site_projects
+from bag8.common import inspect
 from bag8.common import iter_containers
 from bag8.common import json_check
 from bag8.common import render_yml
-from bag8.common import update_container_hosts
-from bag8.common import update_local_hosts
 
 
 class Tools(object):
@@ -27,49 +34,93 @@ class Tools(object):
     def __init__(self, project=None):
         self.project = project
 
-    def hosts(self):
-        """Updates your containers /etc/hosts and/or you local /etc/hosts.
-        """
-        hosts_list = []
-        user_dict = {}
+    def _update_docker_conf(self):
 
-        # get the current list [(ip, domain)]
-        client = docker_client()
-        for name, container in iter_containers(client=client):
-            infos = client.inspect_container(container['Id'])
-            ip = infos['NetworkSettings']['IPAddress']
-            hostname = infos['Config']['Domainname']
-            user = infos['Config']['User'] or 'root'
-            if not hostname:
+        conf_path = '/etc/default/docker'
+        conf_entry = '-bip 172.17.42.1/24 -dns 172.17.42.1'
+        conf_content = []
+
+        # check already set
+        with open(conf_path) as f:
+            conf_content += [l.strip() for l in f.readlines()]
+
+        # update content
+        opts = [conf_entry]
+        for i, l in enumerate(conf_content):
+            if not l.startswith('DOCKER_OPTS='):
                 continue
-            hosts_list.append((ip, hostname))
-            user_dict[name] = user
+            # has values we don't want to rewrite
+            if '-bip' in l or '-dns' in l:
+                return
+            # keep opts
+            opts.append(re.findall('^DOCKER_OPTS="(.*)"', l)[0])
+            # remove opts line
+            conf_content.remove(l)
+        # add new opts
+        conf_content.append('DOCKER_OPTS="{0}"'.format(' '.join(opts)))
 
-        # here s the current hosts
-        click.echo('hosts found:')
-        click.echo('----')
-        click.echo('\n'.join(['{0}\t{1}'.format(*h) for h in hosts_list]))
-        click.echo('')
+        click.echo("""
+# updates {0} with:
+{1}
+""".format(conf_path, conf_entry).strip())
 
-        # update containers ?
-        click.echo("Update your containers /etc/hosts ?")
-        char = None
-        while char not in ['y', 'n']:
-            click.echo('Yes (y) or skip (n) ?')
-            char = click.getchar()
-        if char == 'y':
-            for name, __ in iter_containers(client=client):
-                update_container_hosts(hosts_list, name,
-                                       user_dict.get(name, 'root'))
+        # update resolve config
+        write_conf(conf_path, '\n'.join(conf_content) + '\n',
+                   bak_path='/tmp/default.docker.orig')
 
-        # update local ?
-        click.echo("Update your local /etc/hosts ?")
-        char = None
-        while char not in ['y', 'n']:
-            click.echo('Yes (y) or no (n) ?')
-            char = click.getchar()
-        if char == 'y':
-            update_local_hosts(hosts_list)
+        if confirm('`sudo service docker restart` ?'):
+            call('sudo service docker restart')
+            sleep(5)
+
+    def _update_dnsmasq_conf(self):
+
+        conf_path = '/etc/dnsmasq.d/50-bag8'
+        if os.path.exists(conf_path):
+            return
+
+        conf_content = """
+except-interface={0}
+bind-interfaces
+server=/{1}/{2}
+""".format(DOCKER_INTERFACE, DOMAIN_SUFFIX, DOCKER_IP).strip()
+
+        click.echo("""
+# updates {0} with:
+{1}
+""".format(conf_path, conf_content).strip())
+
+        # update resolve config
+        write_conf(conf_path, conf_content + '\n')
+
+        if confirm('`sudo service dnsmasq restart` ?'):
+            call('sudo service dnsmasq restart')
+            sleep(5)
+
+    def hosts(self):
+
+        self._update_dnsmasq_conf()
+        self._update_docker_conf()
+
+        # not running
+        try:
+            if not inspect('dnsdock')['State']['Running']:
+                call(' '.join([
+                    'docker',
+                    'start',
+                    'dnsdock',
+                ]))
+        # not exist
+        except APIError:
+            call(' '.join([
+                'docker',
+                'run',
+                '-d',
+                '-v /var/run/docker.sock:/var/run/docker.sock',
+                '--name dnsdock',
+                '-p 172.17.42.1:53:53/udp',
+                'tonistiigi/dnsdock',
+                "-domain={0}".format(DOMAIN_SUFFIX)
+            ]))
 
     def projects(self):
         click.echo('\n'.join(get_available_projects()))
@@ -98,13 +149,15 @@ class Tools(object):
 
         containers = {n.split('_')[1]: n
                       for n, __ in iter_containers()}
-
+        dnsdock_alias = []
         volumes_from = []
 
         for project in get_site_projects(running=True):
             # shortcut
             name = simple_name(project)
             container_name = containers[name]
+            # update alias
+            dnsdock_alias.append('{0}.nginx.{1}'.format(name, DOMAIN_SUFFIX))
             # updates volumes from to share between site and nginx containers
             volumes_from.append(container_name)
             # add link to nginx
@@ -117,6 +170,7 @@ class Tools(object):
             'docker',
             'run',
             '-d',
+            '-e DNSDOCK_ALIAS={0}'.format(','.join(dnsdock_alias)),
             '--name {0}_nginx_1'.format(PREFIX),  # TODO get prefix from cli
             '-p', '0.0.0.0:80:80',
             '-p', '0.0.0.0:443:443',
