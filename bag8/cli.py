@@ -3,13 +3,13 @@ from __future__ import absolute_import, print_function, unicode_literals
 import os.path
 from socket import gaierror
 from socket import getaddrinfo
-import sys
 
 import click
 
 from bag8.common import PREFIX
 from bag8.common import DOMAIN_SUFFIX
 from bag8.common import call
+from bag8.common import error
 from bag8.common import get_container_name
 from bag8.docker import Dockext
 from bag8.compose import Figext
@@ -96,8 +96,7 @@ def setup():
     try:
         getaddrinfo('dnsdock.' + DOMAIN_SUFFIX, 53)
     except gaierror:
-        click.echo("docker DNS resolution fails!")
-        sys.exit(1)
+        error("docker DNS resolution fails!")
     else:
         click.echo("docker DNS resolution is ready.")
 
