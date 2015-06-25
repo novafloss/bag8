@@ -25,7 +25,7 @@ else:
     click.echo('No config found at `{0}`. Loads default values.'.format(CONFIG_PATH))  # noqa
     config = {}
 ACCOUNT = config.get('account', None)
-DOMAIN_SUFFIX = config.get('domain_suffix', 'local')
+DOMAIN_SUFFIX = config.get('domain_suffix', 'docker')
 PREFIX = config.get('prefix', 'bag8')
 REGISTRY = config.get('registry', None)
 DOCKER_INTERFACE = config.get('docker_interface', 'docker0')
@@ -325,7 +325,7 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
         + links
 
     # clean links according tree permitted names and project accepted ones,
-    # ex.: dummy.js:dummyjs.local > dummyjs:dummyjs.local
+    # ex.: dummy.js:dummyjs.docker > dummyjs:dummyjs.docker
     links = []
     for link in app_section['links']:
         name = simple_name(link.split(':')[0])
