@@ -1,3 +1,0 @@
-
-def TestExitError(Exception):
-    pass

@@ -12,7 +12,6 @@ from bag8.common import Bag8Mixin
 from bag8.common import get_container_name
 from bag8.common import get_dockerfile_path
 from bag8.common import get_image_name
-from bag8.common import inspect
 from bag8.common import iter_deps
 from bag8.common import iter_containers
 
@@ -50,8 +49,8 @@ class Dockext(Bag8Mixin):
         exec_('docker cp {0}:{1} {2}'.format(self.container, src, dest))
 
     def exec_(self, command='bash', interactive=False):
-        exec_('docker exec {0} {1} {2}'.format('-it ' if interactive else '',
-                                               self.container, command))
+        exec_('docker exec{0} {1} {2}'.format(' -it' if interactive else '',
+                                              self.container, command))
 
     def inspect(self):
         exec_('docker inspect {0}'.format(self.container))
@@ -118,8 +117,8 @@ runnning `docker build` you can edit it and add some step.
             call('docker start {0}'.format(container))
 
         call_func = exec_ if exit else call
-        call_func('docker start {0} {1}'.format('-i ' if interactive else '',
-                                                self.container))
+        call_func('docker start{0} {1}'.format(' -i' if interactive else '',
+                                               self.container))
 
     def stop(self):
         for dep in iter_deps(self.project):

@@ -347,13 +347,15 @@ def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
 @click.argument('project', default=cwdname)
 @click.option('-c', '--command', default='bash',
               help='Command to exec in a running container, default: `bash`.')
+@click.option('--interactive/--no-interactive', default=True,
+              help="Use interactive mode or not, default: True")
 @click.option('-p', '--prefix', default=PREFIX,
               help="Prefix name of containers.")
 @click.option('-r', '--reuseyml', default=False, is_flag=True,
               help="Reuse previous generated fig.yml file, default: False")
 @click.option('-u', '--user', default=None,
               help='Specifies the user for the app to run, ex: root.')  # noqa
-def develop(project, command, prefix, reuseyml, user):
+def develop(project, command, interactive, prefix, reuseyml, user):
     """Drop you in develop environment of your project."""
 
     Tools().dns()
@@ -374,4 +376,4 @@ def develop(project, command, prefix, reuseyml, user):
         dockext.start(exit=False)
 
     # enter in it
-    dockext.exec_(command=command, interactive=True)
+    dockext.exec_(command=command, interactive=interactive)

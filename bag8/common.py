@@ -33,7 +33,6 @@ DOCKER_IP = config.get('docker_ip', '172.17.42.1')
 DATA_PATHS = [
     '.'  # current dir before all
 ] + config.get('data_paths', [])
-TESTING = config.get('testing')
 
 RE_WORD = re.compile('\W')
 
