@@ -1,0 +1,4 @@
+app:
+    image: bag8/busybox
+    links:
+        - link:link
