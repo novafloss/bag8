@@ -1,6 +1,8 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import os.path
+import sys
+
 from socket import gaierror
 from socket import getaddrinfo
 
@@ -347,7 +349,7 @@ def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
 @click.argument('project', default=cwdname)
 @click.option('-c', '--command', default='bash',
               help='Command to exec in a running container, default: `bash`.')
-@click.option('--interactive/--no-interactive', default=True,
+@click.option('--interactive/--no-interactive', default=sys.stdout.isatty(),
               help="Use interactive mode or not, default: True")
 @click.option('-p', '--prefix', default=PREFIX,
               help="Prefix name of containers.")
