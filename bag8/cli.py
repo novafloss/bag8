@@ -1,15 +1,17 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import os.path
+import sys
+
 from socket import gaierror
 from socket import getaddrinfo
-import sys
 
 import click
 
 from bag8.common import PREFIX
 from bag8.common import DOMAIN_SUFFIX
 from bag8.common import call
+from bag8.common import error
 from bag8.common import get_container_name
 from bag8.docker import Dockext
 from bag8.compose import Figext
@@ -96,8 +98,7 @@ def setup():
     try:
         getaddrinfo('dnsdock.' + DOMAIN_SUFFIX, 53)
     except gaierror:
-        click.echo("docker DNS resolution fails!")
-        sys.exit(1)
+        error("docker DNS resolution fails!")
     else:
         click.echo("docker DNS resolution is ready.")
 
@@ -346,13 +347,17 @@ def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
 
 @bag8.command()
 @click.argument('project', default=cwdname)
+@click.option('-c', '--command', default='bash',
+              help='Command to exec in a running container, default: `bash`.')
+@click.option('--interactive/--no-interactive', default=sys.stdout.isatty(),
+              help="Use interactive mode or not, default: True")
 @click.option('-p', '--prefix', default=PREFIX,
               help="Prefix name of containers.")
 @click.option('-r', '--reuseyml', default=False, is_flag=True,
               help="Reuse previous generated fig.yml file, default: False")
 @click.option('-u', '--user', default=None,
               help='Specifies the user for the app to run, ex: root.')  # noqa
-def develop(project, prefix, reuseyml, user):
+def develop(project, command, interactive, prefix, reuseyml, user):
     """Drop you in develop environment of your project."""
 
     Tools().dns()
@@ -373,4 +378,4 @@ def develop(project, prefix, reuseyml, user):
         dockext.start(exit=False)
 
     # enter in it
-    dockext.exec_(interactive=True)
+    dockext.exec_(command=command, interactive=interactive)

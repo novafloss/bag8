@@ -63,6 +63,12 @@ def exec_(cmd):
     os.execv(path, args_)
 
 
+def error(msg, exit=True):
+    click.echo(msg)
+    if exit:
+        sys.exit(1)
+
+
 def write_conf(path, content, bak_path=None):
 
     # keep
@@ -103,12 +109,12 @@ def get_container_name(project, prefix=PREFIX, exit=True):
                                                 project=project)]
 
     if not containers:
-        click.echo('no container found for: {0}'.format(project))
-        return None if not exit else sys.exit(1)
+        return error('no container found for: {0}'.format(project),
+                     exit=exit)
 
     if len(containers) > 1:
-        click.echo('more than one containers found: {0}'.format(' '.join(containers)))  # noqa
-        return None if not exit else sys.exit(1)
+        return error('more than one containers found: {0}'.format(' '.join(containers)),  # noqa
+                     exit=exit)
 
     return containers[0]
 
@@ -170,17 +176,14 @@ def get_dockerfile_path(project):
     for path, _project in iter_dockerfiles_paths():
         if _project == project:
             return os.path.join(path, _project)
-    click.echo('Dockerfile not found: {0}'.format(path))
-    sys.exit(1)
+    error('Dockerfile not found: {0}'.format(path))
 
 
 def get_bag8_path(project, exit=True):
     for path, _project in iter_bag8_paths():
         if _project == project:
             return os.path.join(path, _project)
-    if exit:
-        click.echo('fig.yml not found: {0}'.format(project))
-        sys.exit(1)
+    error('fig.yml not found: {0}'.format(project), exit=exit)
 
 
 def get_image_name(project, tag='latest'):
@@ -289,22 +292,19 @@ def json_check(environment, links, volumes):
     try:
         environment = [] if not environment else json.loads(environment)
     except Exception:
-        click.echo('invalid environment context: {0}'.format(environment))
-        sys.exit(1)
+        error('invalid environment context: {0}'.format(environment))
 
     # links check
     try:
         links = [] if not links else json.loads(links)
     except Exception:
-        click.echo('invalid links context: {0}'.format(links))
-        sys.exit(1)
+        error('invalid links context: {0}'.format(links))
 
     # volumes check
     try:
         volumes = [] if not volumes else json.loads(volumes)
     except Exception:
-        click.echo('invalid volumes context: {0}'.format(volumes))
-        sys.exit(1)
+        error('invalid volumes context: {0}'.format(volumes))
 
     return environment, links, volumes
 
