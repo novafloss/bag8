@@ -132,24 +132,6 @@ def get_customized_yml(project, ports=True, no_volumes=False,
         return custom_yml
 
     for k, v in yaml.load(open(yml_path)).items():
-        if 'dev_environment' in v and develop and k == 'app':
-            # ensure key
-            if 'environment' not in v:
-                v['environment'] = []
-            v['environment'].extend(v.get('dev_environment', []))
-        # clean dev section
-        if 'dev_environment' in v:
-            del v['dev_environment']
-        # only for the working app
-        if 'dev_volumes' in v and develop and k == 'app':
-            # ensure key
-            if 'volumes' not in v:
-                v['volumes'] = []
-            for l in v.get('dev_volumes', []):
-                v['volumes'].append(l % os.environ)
-        # clean dev volumes
-        if 'dev_volumes' in v:
-            del v['dev_volumes']
         # remove ports if has one but is not expected
         if 'ports' in v and not ports:
             del v['ports']
@@ -346,6 +328,21 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
     # set user if not has one
     if user and 'user' not in app_section:
         app_section['user'] = user
+
+    # Setup develop mode
+    if develop:
+        for volume in app_section.get('dev_volumes', []):
+            app_section['volumes'].append(volume % os.environ)
+
+        for env in app_section.get('dev_environment', []):
+            app_section['environment'].append(env)
+
+    # Clean compose extensions
+    for app in yml_dict:
+        if 'dev_volumes' in yml_dict[app]:
+            del yml_dict[app]['dev_volumes']
+        if 'dev_environment' in yml_dict[app]:
+            del yml_dict[app]['dev_environment']
 
     temp_path = get_temp_path(project, prefix)
     with open(temp_path, 'wb') as out_yml:
