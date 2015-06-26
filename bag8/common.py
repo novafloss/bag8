@@ -317,9 +317,12 @@ def render_yml(project, environment=None, links=None, ports=True, user=None,
 
     # clean links according tree permitted names and project accepted ones,
     # ex.: dummy.js:dummyjs.local > dummyjs:dummyjs.local
-    app_section['links'] = [':'.join((simple_name(k), v))
-                            for k, v in [l.split(':')
-                                         for l in app_section['links']]]
+    links = []
+    for link in app_section['links']:
+        name = simple_name(link.split(':')[0])
+        link = name + ':' + link.split(':')[1] if ':' in link else name
+        links.append(link)
+    app_section['links'] = links
 
     # updates volumes
     app_section['volumes'] = yml_dict[app].get('volumes', []) \
