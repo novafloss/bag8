@@ -151,6 +151,15 @@ def get_customized_yml(project, ports=True, no_volumes=False,
         # update sections
         custom_yml[k if k != 'app' else simple_name(project)] = v
 
+        links = []
+        for link in v.get('links', []):
+            try:
+                name, alias = link.split(':', 1)
+            except ValueError:
+                name = link
+            links.append(name)
+        v['environment'].append('BAG8_LINKS=' + ' '.join(links))
+
     return custom_yml
 
 
