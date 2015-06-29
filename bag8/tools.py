@@ -158,7 +158,8 @@ server=/{1}/{2}
             # updates volumes from to share between site and nginx containers
             volumes_from.append(container_name)
             # add link to nginx
-            links.append('{0}:{1}.local'.format(container_name, name))
+            links.append('{0}:{1}.{2}'.format(container_name, name,
+                                              DOMAIN_SUFFIX))
             # copy nginx site conf
             shutil.copy(os.path.join(get_bag8_path(project), 'site.conf'),
                         os.path.join(conf_path, '{0}.conf'.format(project)))
@@ -171,7 +172,7 @@ server=/{1}/{2}
             '--name {0}_nginx_1'.format(PREFIX),  # TODO get prefix from cli
             '-p', '0.0.0.0:80:80',
             '-p', '0.0.0.0:443:443',
-            '--hostname www.nginx.local',
+            '--hostname www.nginx.{0}'.format(DOMAIN_SUFFIX),
             ' '.join(['--volumes-from {0}'.format(v) for v in volumes_from]),
             ' '.join(['-v {0}'.format(v) for v in volumes]),
             ' '.join(['--link {0}'.format(l) for l in links]),
