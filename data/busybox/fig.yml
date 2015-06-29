@@ -2,3 +2,7 @@ app:
     image: bag8/busybox
     links:
         - link:link
+    dev_environment:
+        - DUMMY=yo
+    dev_volumes:
+        - "/tmp:/tmp"

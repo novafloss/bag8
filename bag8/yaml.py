@@ -81,10 +81,14 @@ class Yaml(object):
 
         # Setup develop mode
         if self.project.develop:
-            for volume in self._data.get('dev_volumes', []):
-                self._data['volumes'].append(volume % os.environ)
-            for env in self._data.get('dev_environment', []):
-                self._data['environment'].append(env)
+            for volume in self._data[app].get('dev_volumes', []):
+                if 'volumes' not in self._data[app]:
+                    self._data[app]['volumes'] = []
+                self._data[app]['volumes'].append(volume % os.environ)
+            for env in self._data[app].get('dev_environment', []):
+                if 'environment' not in self._data[app]:
+                    self._data[app]['environment'] = []
+                self._data[app]['environment'].append(env)
 
         # Clean compose extensions
         for key in self._data:
