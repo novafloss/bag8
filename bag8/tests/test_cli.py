@@ -87,6 +87,35 @@ def test_execute():
     assert code == 0, err + '\n' + out
     assert out.strip() == 'hi'
 
+    # execute something in link container
+    out, err, code = check_call(['bag8', 'exec', 'busybox', '-s', 'link',
+                                 '-c', 'echo "hi link"'])
+    assert code == 0, err + '\n' + out
+    assert out.strip() == 'hi link'
+
+
+@pytest.mark.needdocker()
+def test_logs():
+
+    # run some messages
+    check_call(['bag8', 'run', 'busybox', '--keep', '-c', 'echo "busybox"'])
+
+    # logs main
+    out, err, code = check_call(['bag8', 'logs', 'busybox'])
+    assert code == 0, err + '\n' + out
+    assert out.strip() == 'busybox'
+
+    # logs service
+    out, err, code = check_call(['bag8', 'logs', 'busybox', '-s', 'link',
+                                 '--no-follow'])
+    assert code == 0, err + '\n' + out
+    assert out.strip() == ''
+
+    # logs ?
+    out, err, code = check_call(['bag8', 'logs', 'busybox', '-s', 'what'])
+    assert code == 0, err + '\n' + out
+    assert out.strip() == 'no container for busybox_busybox_x'
+
 
 @pytest.mark.needdocker()
 def test_nginx():

@@ -14,6 +14,7 @@ from bag8.config import Config
 from bag8.project import Project
 from bag8.tools import Tools
 from bag8.utils import check_call
+from bag8.utils import exec_
 from bag8.utils import inspect
 
 from compose.cli.main import setup_logging
@@ -84,11 +85,43 @@ def dns():
 @click.argument('project', default=cwdname)
 @click.option('-c', '--command', default=None,
               help='Command to exec in a running container, default: None.')
-def execute(command, project):
+@click.option('-s', '--service', default=None,
+              help='Service container we want exec, default: project.name.')
+def execute(command, project, service):
     """Exec command in a running container for a given project.
     """
     p = Project(project)
-    p.execute(command=command)
+    p.execute(command=command, service_name=service)
+
+
+@bag8.command()
+@click.argument('project', default=cwdname)
+@click.option('--follow/--no-follow', default=None,
+              help='Follow the logs, default: depend if running.')
+@click.option('-s', '--service', default=None,
+              help='Service container we want the log, default: project.name.')
+def logs(follow, project, service):
+    """Get logs for a project related container.
+    """
+    p = Project(project)
+    s = service or project
+
+    args = ['docker', 'logs']
+
+    names = [c.name for c in p.containers([s])]
+
+    # log follow if running or explicit
+    if names and follow is not False:
+        args += ['-f']
+
+    # get missing names if stopped
+    names = [c.name for c in p.containers([s], stopped=True)]
+
+    if not names:
+        return click.echo('no container for {0}_{0}_x'.format(project, s))
+
+    # do logs
+    exec_(args + names)
 
 
 @bag8.command()
