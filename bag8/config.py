@@ -20,6 +20,7 @@ class Config(object):
             data = {}
         self.account = data.get('account', 'bag8')
         self.domain_suffix = data.get('domain_suffix', 'local')
+        self.insecure_registry = data.get('insecure_registry', False)
         self.prefix = data.get('prefix', 'bag8')
         self.registry = data.get('registry', None)
         self.docker_interface = data.get('docker_interface', 'docker0')

@@ -155,6 +155,16 @@ class Project(ComposeProject):
         """
         pass
 
+    def pull(self, service_names=None, insecure_registry=None):
+
+        if insecure_registry is None:
+            insecure_registry = self.config.insecure_registry
+        else:
+            insecure_registry = False
+
+        for service in self.get_services(service_names, include_deps=True):
+            service.pull(insecure_registry=insecure_registry)
+
     def push(self, service_names=None, insecure_registry=False):
         for service in self.get_services(service_names):
             service.push(insecure_registry=insecure_registry)
