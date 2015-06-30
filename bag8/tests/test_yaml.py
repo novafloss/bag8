@@ -37,6 +37,7 @@ def test_data():
     project = Project('busybox', develop=True)
     assert Yaml(project).data == {
         'busybox': {
+            'command': 'sh',
             'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
             'environment': [
                 'DNSDOCK_ALIAS=busybox.docker',
@@ -97,6 +98,7 @@ def test_service_dicts():
     assert sorted(Yaml(project).service_dicts) == sorted([
         {
             'name': 'busybox',
+            'command': 'sh',
             'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
             'environment': [
                 'DNSDOCK_ALIAS=busybox.docker',
