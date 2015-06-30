@@ -14,7 +14,7 @@ def test_data():
         'busybox': {
             'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
             'environment': [
-                'DNSDOCK_ALIAS=busybox.local',
+                'DNSDOCK_ALIAS=busybox.docker',
                 'DNSDOCK_IMAGE=',
                 'BAG8_LINKS=link'
             ],
@@ -25,7 +25,7 @@ def test_data():
         },
         'link': {
             'environment': [
-                'DNSDOCK_ALIAS=link.local',
+                'DNSDOCK_ALIAS=link.docker',
                 'DNSDOCK_IMAGE=',
                 'BAG8_LINKS='
             ],
@@ -39,7 +39,7 @@ def test_data():
         'busybox': {
             'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
             'environment': [
-                'DNSDOCK_ALIAS=busybox.local',
+                'DNSDOCK_ALIAS=busybox.docker',
                 'DNSDOCK_IMAGE=',
                 'BAG8_LINKS=link',
                 'DUMMY=yo'
@@ -54,7 +54,7 @@ def test_data():
         },
         'link': {
             'environment': [
-                'DNSDOCK_ALIAS=link.local',
+                'DNSDOCK_ALIAS=link.docker',
                 'DNSDOCK_IMAGE=',
                 'BAG8_LINKS='
             ],
@@ -72,7 +72,7 @@ def test_service_dicts():
             'name': 'busybox',
             'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
             'environment': [
-                'DNSDOCK_ALIAS=busybox.local',
+                'DNSDOCK_ALIAS=busybox.docker',
                 'DNSDOCK_IMAGE=',
                 'BAG8_LINKS=link'
             ],
@@ -84,7 +84,7 @@ def test_service_dicts():
         {
             'name': 'link',
             'environment': [
-                'DNSDOCK_ALIAS=link.local',
+                'DNSDOCK_ALIAS=link.docker',
                 'DNSDOCK_IMAGE=',
                 'BAG8_LINKS='
             ],
@@ -99,7 +99,7 @@ def test_service_dicts():
             'name': 'busybox',
             'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
             'environment': [
-                'DNSDOCK_ALIAS=busybox.local',
+                'DNSDOCK_ALIAS=busybox.docker',
                 'DNSDOCK_IMAGE=',
                 'BAG8_LINKS=link',
                 'DUMMY=yo'
@@ -115,7 +115,7 @@ def test_service_dicts():
         {
             'name': 'link',
             'environment': [
-                'DNSDOCK_ALIAS=link.local',
+                'DNSDOCK_ALIAS=link.docker',
                 'DNSDOCK_IMAGE=',
                 'BAG8_LINKS='
             ],

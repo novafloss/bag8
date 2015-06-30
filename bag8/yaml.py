@@ -71,7 +71,7 @@ class Yaml(object):
         app = self.project.simple_name
 
         # clean links according tree permitted names and project accepted ones,
-        # ex.: dummy.js:dummyjs.local > dummyjs:dummyjs.local
+        # ex.: dummy.js:dummyjs.docker > dummyjs:dummyjs.docker
         links = []
         for link in self._data[app].get('links', []):
             name = simple_name(link.split(':')[0])

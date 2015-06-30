@@ -19,7 +19,7 @@ class Config(object):
             click.echo('Loads default values.')
             data = {}
         self.account = data.get('account', 'bag8')
-        self.domain_suffix = data.get('domain_suffix', 'local')
+        self.domain_suffix = data.get('domain_suffix', 'docker')
         self.insecure_registry = data.get('insecure_registry', False)
         self.prefix = data.get('prefix', 'bag8')
         self.registry = data.get('registry', None)
