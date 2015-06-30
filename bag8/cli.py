@@ -8,19 +8,24 @@ from socket import getaddrinfo
 
 import click
 
-from bag8.common import PREFIX
-from bag8.common import DOMAIN_SUFFIX
-from bag8.common import call
-from bag8.common import error
-from bag8.common import get_container_name
-from bag8.docker import Dockext
-from bag8.compose import Figext
+from docker.errors import APIError
+
+from bag8.config import Config
+from bag8.project import Project
 from bag8.tools import Tools
+from bag8.utils import check_call
+from bag8.utils import exec_
+from bag8.utils import inspect
+
 from compose.cli.main import setup_logging
 
 
 def cwdname():
     return os.path.basename(os.getcwd())
+
+
+def isatty():
+    return sys.stdout.isatty()
 
 
 @click.group()
@@ -29,353 +34,220 @@ def bag8():
 
 
 @bag8.command()
-@click.argument('project')
-@click.option('-f', '--force', default=False, is_flag=True,
-              help="Force no cache, default: False.")
-@click.option('-t', '--tag', default='latest',
-              help='Specifies the image tag to build, default: latest')
-def build(force, project, tag):
-    """Build an image for the current repository and passed tag (or latest),
-
-    eq: docker build --rm (--no-cache) -t <registry>/<account>/<project>:<tag> <Dockerfile>  # noqa
-    """
-    Dockext(project=project, tag=tag).build(force=force)
+@click.argument('project', default=cwdname)
+@click.option('--cache/--no-cache', default=True,
+              help="Use cache, default: True")
+def build(cache, project):
+    p = Project(project)
+    p.build(no_cache=not cache)
 
 
 @bag8.command()
-@click.argument('project')
-@click.argument('container', default='')
-@click.option('-t', '--tag', default='latest',
-              help='Specifies the image tag to build, default: latest')
-def commit(container, project, tag):
-    """Commits a container for the current repository and passed tag
-    (or latest),
-
-    eq: docker commit <container> <registry>/<account>/<project>:<tag>
-    """
-    Dockext(container=container, project=project, tag=tag).commit()
-
-
-@bag8.command()
-@click.argument('project')
-@click.argument('container', default='')
-@click.option('-d', '--dest', default='.',
-              help='Dest path when you use the `cp` command, default: `.`.')
-@click.option('-s', '--src', help='Source path when you use the `cp` command.')
-def cp(container, dest, project, src):
-    """Copies a container source path to a local dest path.
-
-    eq: docker cp <container>:<src> <dest>
-    """
-    Dockext(container=container, project=project).cp(src, dest=dest)
-
-
-@bag8.command(name='exec')
-@click.argument('project')
-@click.argument('container', default='')
+@click.argument('project', default=cwdname)
 @click.option('-c', '--command', default='bash',
-              help='Command to exec in a running container, default: `bash`.')
-@click.option('-i', '--interactive', default=False, is_flag=True,
-              help="Exec command in interactive mode, default: False.")
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-def exec_(container, command, interactive, prefix, project):
-    """Exec a command into a running container, default: `bash`.
-
-    eq: docker exec (-it) <container> <command>
+              help='Command to exec in a running container, default: None.')
+@click.option('-i', '--interactive', default=isatty, is_flag=True,
+              help="Use tty mode or not, default: isatty ?")
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def develop(command, interactive, prefix, project):
+    """Drops you in develop environment of your project.
     """
-    Dockext(container=container, prefix=prefix, project=project)\
-        .exec_(command=command, interactive=interactive)
-
-
-@bag8.command()
-def setup():
-    """Setup docker and dnsmasq."""
-    Tools().update_dnsmasq_conf()
-    Tools().update_docker_conf()
     Tools().dns()
 
-    try:
-        getaddrinfo('dnsdock.' + DOMAIN_SUFFIX, 53)
-    except gaierror:
-        error("docker DNS resolution fails!")
+    p = Project(project, develop=True, prefix=prefix)
+
+    # running
+    if p.containers([p.name]):
+        pass
+    # not running
+    if p.containers([p.name], stopped=True):
+        p.start()
+    # not exist
     else:
-        click.echo("docker DNS resolution is ready.")
+        p.up()
+
+    p.execute(command=command, interactive=interactive)
 
 
 @bag8.command()
 def dns():
     """Start or restart docker DNS server."""
-    Tools().dns()
+    result = Tools().dns()
+    if not result:
+        return
+
+    out, err, returncode = result
+    if returncode:
+        click.echo(err + '\n' + out)
+        sys.exit(returncode)
 
 
-@bag8.command()
-@click.argument('project')
-@click.argument('container', default='')
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-def inspect(container, prefix, project):
-    """Inspects a container for a given project.
-
-    eq: docker inspect <container>
+@bag8.command(name='exec')
+@click.argument('project', default=cwdname)
+@click.option('-c', '--command', default=None,
+              help='Command to exec in a running container, default: None.')
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+@click.option('-s', '--service', default=None,
+              help='Service container we want exec, default: project.name.')
+def execute(command, prefix, project, service):
+    """Exec command in a running container for a given project.
     """
-    Dockext(container=container, prefix=prefix, project=project).inspect()
+    p = Project(project, prefix=prefix)
+    p.execute(command=command, service_name=service)
 
 
 @bag8.command()
-@click.argument('project')
-@click.argument('container', default='')
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-def logs(container, prefix, project):
-    """Follows a container logs for a given project.
-
-    eq: docker logs -f <container>
+@click.argument('project', default=cwdname)
+@click.option('--follow/--no-follow', default=None,
+              help='Follow the logs, default: depend if running.')
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+@click.option('-s', '--service', default=None,
+              help='Service container we want the log, default: project.name.')
+def logs(follow, prefix, project, service):
+    """Get logs for a project related container.
     """
-    Dockext(container=container, prefix=prefix, project=project).logs()
+    p = Project(project, prefix=prefix)
+    s = service or project
+
+    args = ['docker', 'logs']
+
+    names = [c.name for c in p.containers([s])]
+
+    # log follow if running or explicit
+    if names and follow is not False:
+        args += ['-f']
+
+    # get missing names if stopped
+    names = [c.name for c in p.containers([s], stopped=True)]
+
+    if not names:
+        return click.echo('no container for {0}_{1}_x'.format(p.name, s))
+
+    # do logs
+    exec_(args + names)
 
 
 @bag8.command()
-@click.option('-l', '--links', default='',
-              help='Links list to link with the main app container, ex: \'["app:app.local"]\'.')  # noqa
-@click.option('-v', '--volumes', default='',
-              help='Volumes list to mount into the container, ex: \'["/tmp:/home/src"]\'.')  # noqa
-def nginx(links, volumes):
+def nginx():
     """Run nginx container linked with all available sites.
     """
-    # stop previous nginx
-    call('docker rm -f bag8_nginx_1')
+    # stop previous nginx if exist
+    try:
+        inspect('nginx')
+        check_call(['docker', 'rm', '-f', 'nginx'], exit=False)
+    except APIError:
+        pass
     # start a new one
-    Tools().nginx(links=links, volumes=volumes)
-
-
-@bag8.command()
-def projects():
-    """Lists available projects."""
-    Tools().projects()
-
-
-@bag8.command()
-@click.argument('project')
-@click.option('-r', '--reuseyml', default=False, is_flag=True,
-              help="Reuse previous generated fig.yml file, default: False")
-@click.option('-t', '--tag', default=None,
-              help='Specifies the image tag to pull with docker command explicitly.')  # noqa
-def pull(project, reuseyml, tag):
-    """Pulls a project image and its dependencies through compose shortcut. If
-    you specify the tag opion it only docker pull a specific image which useful
-    for base images like debian.
-
-    ex: $ pull busybox
-    docker-compose -f /home/florent/.local/bag8/bag8_busybox.yml -p bag8 pull --allow-insecure-ssl  # noqa
-
-    ex: $ pull -t latest busybox
-    docker pull bag8/busybox:latest
-    """
-    if tag:
-        Dockext(project=project, tag=tag).pull()
-    else:
-        Figext(project=project, reuseyml=reuseyml).pull()
-
-
-@bag8.command()
-@click.argument('project')
-@click.option('-t', '--tag', default='latest',
-              help='Specifies the image tag to build, default: latest')
-def push(project, tag):
-    """Push an image to the current repository and passed tag (or latest),
-    ex: <registry>/<account>/<project>:<tag>.
-    """
-    Dockext(project=project, tag=tag).push()
-
-
-@bag8.command()
-@click.argument('project')
-@click.option('-t', '--tag', default='latest',
-              help='Specifies the image tag to build, default: latest')
-def rebuild(project, tag):
-    """Rebuild an image from a existing one with the default wait and run CMD.
-    """
-    Dockext(project=project, tag=tag).rebuild()
+    out, err, code = Tools().nginx()
 
 
 @bag8.command()
 @click.argument('project', default=cwdname)
-@click.option('--develop', default=False, is_flag=True,
+def pull(project):
+    """Pulls a project image (and all its dependencies).
+    """
+    p = Project(project)
+    p.pull()
+
+
+@bag8.command()
+@click.argument('project', default=cwdname)
+def push(project):
+    """Push the image of the given project,
+    """
+    p = Project(project)
+    p.push(service_names=[p.simple_name], insecure_registry=True)
+
+
+@bag8.command()
+@click.argument('project', default=cwdname)
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def rm(prefix, project):
+    """Removes containers for a given project.
+    """
+    p = Project(project, prefix=prefix)
+    p.stop(timeout=0)
+    p.remove_stopped()
+
+
+@bag8.command()
+@click.argument('project', default=cwdname)
+def rmi(project):
+    """Removes an image locally.
+    """
+    Project(project).rmi()
+
+
+@bag8.command()
+@click.argument('project', default=cwdname)
+@click.option('-c', '--command', default=None,
+              help='Command to run, default: None.')
+@click.option('-d', '--develop', default=False, is_flag=True,
               help='Start the containers in develop mode. default: False.')
-@click.option('-e', '--environment', default='',
-              help='Environment variables to pass to the container, ex: \'["BRANCH=master", "RUN=test"]\'.')  # noqa
-@click.option('-l', '--links', default='',
-              help='Links list to link with the main app container, ex: \'["app:app.local"]\'.')  # noqa
-@click.option('--ports/--no-ports', default=True,
-              help="Expose ports or not, default: True")
-@click.option('-u', '--user', default=None,
-              help='Specifies the user for the app to run, ex: root.')
-@click.option('-v', '--volumes', default='',
-              help='Volumes list to mount into the container, ex: \'["/tmp:/home/src"]\'.')  # noqa
-@click.option('--no-volumes', default=False, is_flag=True,
-              help="Skip volumes if not necessary.")
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-def render(project, develop, environment, links, ports, user, volumes,
-           no_volumes, prefix):
-    """Generates a fig.yml file for a given project and overriding ags.
+@click.option('--keep', default=False, is_flag=True,
+              help='Do not --rm after, default: False')
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def run(command, develop, keep, prefix, project):
+    """Start containers for a given project.
     """
-    Tools(project=project).render(environment, links, ports, user,
-                                  volumes, no_volumes, prefix, develop)
+    p = Project(project, develop=develop, prefix=prefix)
+    p.run(command=command, remove=not keep)
 
 
 @bag8.command()
-@click.argument('project', default=cwdname)
-@click.option('-a', '--all', default=False, is_flag=True,
-              help="Removes all corresponding containers if has more than one.")  # noqa
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-@click.argument('container', default='')
-def rm(all, container, prefix, project):
-    """Removes a container for a given project.
+def setup():
+    """Setup docker and dnsmasq."""
 
-    eq: docker rm -f <container>
-    """
-    Dockext(container=container, prefix=prefix, project=project).rm(all=all)
-
-
-@bag8.command()
-@click.argument('project')
-@click.option('-t', '--tag', default='latest',
-              help='Specifies the image tag to build, default: latest')
-def rmi(project, tag):
-    """Remove an image for the current repository and passed tag (or latest),
-
-    eq: docker rmi <registry>/<account>/<project>:<tag>
-    """
-    Dockext(project=project, tag=tag).rmi()
-
-
-@bag8.command()
-@click.argument('project')
-@click.option('-c', '--command', default='bash',
-              help='Specifies the run command, ex.: /bin/bash.')
-@click.option('-e', '--environment', default='',
-              help='Environment variables to pass to the container, ex: \'["BRANCH=master", "RUN=test"]\'.')  # noqa
-@click.option('-l', '--links', default='',
-              help='Links list to link with the main app container, ex: \'["app:app.local"]\'.')  # noqa
-@click.option('-r', '--reuseyml', default=False, is_flag=True,
-              help="Reuse previous generated fig.yml file, default: False")
-@click.option('--ports/--no-ports', default=True,
-              help="Expose ports or not, default: True")
-@click.option('-u', '--user', default=None,
-              help='Specifies the user for the app to run, ex: root.')  # noqa
-@click.option('-v', '--volumes', default='',
-              help='Volumes list to mount into the container, ex: \'["/tmp:/home/src"]\'.')  # noqa
-@click.option('--no-volumes', default=False, is_flag=True,
-              help="Skip volumes if not necessary.")
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-def run(project, command, environment, links, ports, reuseyml, user, volumes,
-        no_volumes, prefix):
-    """Run a container with compose for a given project and a given command.
-
-    eq: docker-compose -p <path to project fig.yml> run <?command>
-    """
-    Figext(project, environment=environment, links=links, ports=ports,
-           reuseyml=reuseyml, user=user, volumes=volumes,
-           no_volumes=no_volumes, prefix=prefix).run(command=command)
-
-
-@bag8.command()
-@click.argument('project')
-@click.argument('container', default='')
-@click.option('-i', '--interactive', default=False, is_flag=True,
-              help="Start exited container in interactive mode, default: False.")  # noqa
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-def start(container, interactive, prefix, project):
-    """Start a container in interactive mode for a given project.
-
-    eq: docker start (-i) <container>
-    """
-    Dockext(container=container, prefix=prefix, project=project).start(interactive=interactive)  # noqa
-
-
-@bag8.command()
-@click.argument('project', default=cwdname)
-@click.argument('container', default='')
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-def stop(container, prefix, project):
-    """Stop a container for a given project.
-
-    eq: docker stop <container>
-    """
-    Dockext(container=container, prefix=prefix, project=project).stop()
-
-
-@bag8.command()
-@click.argument('project')
-@click.option('-d', '--daemon', default=False, is_flag=True,
-              help='Start the containers in the background and leave them running, default: False.')  # noqa
-@click.option('--develop', default=False, is_flag=True,
-              help='Start the containers in develop mode. default: False.')
-@click.option('-e', '--environment', default='',
-              help='Environment variables to pass to the container, ex: \'["BRANCH=master", "RUN=test"]\'.')  # noqa
-@click.option('-l', '--links', default='',
-              help='Links list to link with the main app container, ex: \'["app:app.local"]\'.')  # noqa
-@click.option('--ports/--no-ports', default=True,
-              help="Expose ports or not, default: True")
-@click.option('-r', '--reuseyml', default=False, is_flag=True,
-              help="Reuse previous generated fig.yml file, default: False")
-@click.option('-u', '--user', default=None,
-              help='Specifies the user for the app to run, ex: root.')  # noqa
-@click.option('-v', '--volumes', default='',
-              help='Volumes list to mount into the container, ex: \'["/tmp:/home/src"]\'.')  # noqa
-@click.option('--no-volumes', default=False, is_flag=True,
-              help="Skip volumes if not necessary.")
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-def up(project, daemon, develop, environment, links, ports, prefix, reuseyml,
-       user, volumes, no_volumes):
-    """Triggers `docker-compose up` command for a given project.
-
-    Environment, links, user, volumes can be overriden and will be embedded in
-    the generated fig.yml.
-    """
-    Figext(project, environment=environment, links=links, ports=ports,
-           prefix=prefix, reuseyml=reuseyml, user=user, volumes=volumes,
-           no_volumes=no_volumes, develop=develop).up(daemon=daemon)
-
-
-@bag8.command()
-@click.argument('project', default=cwdname)
-@click.option('-c', '--command', default='bash',
-              help='Command to exec in a running container, default: `bash`.')
-@click.option('--interactive/--no-interactive', default=sys.stdout.isatty(),
-              help="Use interactive mode or not, default: True")
-@click.option('-p', '--prefix', default=PREFIX,
-              help="Prefix name of containers.")
-@click.option('-r', '--reuseyml', default=False, is_flag=True,
-              help="Reuse previous generated fig.yml file, default: False")
-@click.option('-u', '--user', default=None,
-              help='Specifies the user for the app to run, ex: root.')  # noqa
-def develop(project, command, interactive, prefix, reuseyml, user):
-    """Drop you in develop environment of your project."""
-
+    Tools().update_dnsmasq_conf()
+    Tools().update_docker_conf()
     Tools().dns()
 
-    container = get_container_name(project, prefix=prefix, exit=False)
-    if not container:
-        click.echo("Spawning new instance in background")
-        Figext(project, develop=True, prefix=prefix, reuseyml=reuseyml,
-               user=user).up(daemon=True, exit=False)
-        container = get_container_name(project, prefix=prefix)
+    try:
+        getaddrinfo('dnsdock.' + Config().domain_suffix, 53)
+    except gaierror:
+        click.echo("docker DNS resolution fails!")
+        sys.exit(1)
+    else:
+        click.echo("docker DNS resolution is ready.")
 
-    dockext = Dockext(container=container, prefix=prefix, project=project)
 
-    # start in bg if not running yet
-    from bag8.common import inspect as _inspect
-    if not _inspect(container)['State']['Running']:
-        click.echo("Restarting instance")
-        dockext.start(exit=False)
+@bag8.command()
+@click.argument('project', default=cwdname)
+@click.option('-i', '--interactive', default=False, is_flag=True,
+              help='Start previous runned/keeped container, default: False.')
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def start(interactive, prefix, project):
+    """Start containers for a given project.
+    """
+    p = Project(project, prefix=prefix)
+    p.start(interactive=interactive)
 
-    # enter in it
-    dockext.exec_(command=command, interactive=interactive)
+
+@bag8.command()
+@click.argument('project', default=cwdname)
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def stop(project, prefix):
+    """Stop containers for a given project.
+    """
+    p = Project(project, prefix=prefix)
+    p.stop(timeout=1)
+
+
+@bag8.command()
+@click.argument('project', default=cwdname)
+@click.option('-d', '--develop', default=False, is_flag=True,
+              help='Start the containers in develop mode. default: False.')
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def up(develop, prefix, project):
+    """Up containers for a given project
+    """
+    p = Project(project, develop=develop, prefix=prefix)
+    p.up(allow_recreate=False)

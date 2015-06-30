@@ -1,2 +1,2 @@
 app:
-    image: busybox
+    image: bag8/busybox

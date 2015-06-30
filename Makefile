@@ -39,7 +39,8 @@ test-debug: clean test-flake8
 # target: test-xdist - Run parallels tests.
 .PHONY: test-xdist
 test-xdist: clean test-flake8
-	py.test -n3 --boxed
+	py.test -x -m "synchronous"
+	py.test -n3 --boxed -m "not synchronous"
 
 # target: test - Run tests for several versions of python with tox.
 .PHONY: test

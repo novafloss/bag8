@@ -9,24 +9,12 @@ from time import sleep
 
 from docker.errors import APIError
 
-from bag8.common import DOCKER_INTERFACE
-from bag8.common import DOCKER_IP
-from bag8.common import DOMAIN_SUFFIX
-from bag8.common import PREFIX
-from bag8.common import TMPFOLDER
-
-from bag8.common import call
-from bag8.common import confirm
-from bag8.common import write_conf
-from bag8.common import simple_name
-from bag8.common import get_available_projects
-from bag8.common import get_container_name
-from bag8.common import get_bag8_path
-from bag8.common import get_site_projects
-from bag8.common import inspect
-from bag8.common import iter_containers
-from bag8.common import json_check
-from bag8.common import render_yml
+from bag8.config import Config
+from bag8.project import Project
+from bag8.utils import check_call
+from bag8.utils import confirm
+from bag8.utils import inspect
+from bag8.utils import write_conf
 
 
 class Tools(object):
@@ -69,10 +57,12 @@ class Tools(object):
                    bak_path='/tmp/default.docker.orig')
 
         if confirm('`sudo service docker restart` ?'):
-            call('sudo service docker restart')
+            check_call(['sudo', 'service', 'docker', 'restart'])
             sleep(5)
 
     def update_dnsmasq_conf(self):
+
+        config = Config()
 
         conf_path = '/etc/dnsmasq.d/50-bag8'
         if os.path.exists(conf_path):
@@ -82,7 +72,8 @@ class Tools(object):
 except-interface={0}
 bind-interfaces
 server=/{1}/{2}
-""".format(DOCKER_INTERFACE, DOMAIN_SUFFIX, DOCKER_IP).strip()
+""".format(config.docker_interface, config.domain_suffix,
+           config.docker_ip).strip()
 
         click.echo("""
 # updates {0} with:
@@ -93,100 +84,87 @@ server=/{1}/{2}
         write_conf(conf_path, conf_content + '\n')
 
         if confirm('`sudo service dnsmasq restart` ?'):
-            call('sudo service dnsmasq restart')
+            check_call(['sudo', 'service', 'dnsmasq', 'restart'])
             sleep(5)
 
     def dns(self):
 
+        config = Config()
+
         # not running
         try:
             if not inspect('dnsdock')['State']['Running']:
-                call(' '.join([
-                    'docker',
-                    'start',
-                    'dnsdock',
-                ]))
+                return check_call(['docker', 'start', 'dnsdock'])
         # not exist
         except APIError:
-            call(' '.join([
+            return check_call([
                 'docker',
                 'run',
                 '-d',
-                '-v /var/run/docker.sock:/var/run/docker.sock',
-                '--name dnsdock',
-                '-p 172.17.42.1:53:53/udp',
+                '-v', '/var/run/docker.sock:/var/run/docker.sock',
+                '--name', 'dnsdock',
+                '-p', '172.17.42.1:53:53/udp',
                 'tonistiigi/dnsdock',
-                "-domain={0}".format(DOMAIN_SUFFIX)
-            ]))
+                "-domain={0}".format(config.domain_suffix)
+            ])
 
-    def projects(self):
-        click.echo('\n'.join(get_available_projects()))
+    def nginx(self):
 
-    def nginx(self, links=None, volumes=None):
+        config = Config()
 
-        conf_path = os.path.join(TMPFOLDER, 'nginx', 'conf.d')
+        conf_path = os.path.join(config.tmpfolder, 'nginx', 'conf.d')
         # remove previous configs
         shutil.rmtree(conf_path, ignore_errors=True)
         # create new conf folder
         os.makedirs(conf_path)
 
-        log_path = os.path.join(TMPFOLDER, 'nginx', 'log')
+        log_path = os.path.join(config.tmpfolder, 'nginx', 'log')
         if not os.path.exists(log_path):
             os.makedirs(log_path)
 
-        environment, links, volumes = json_check(None, links, volumes)
-
-        links = ['{0}:{1}'.format(get_container_name(l.split(':')[0]),
-                                  l.split(':')[1]) for l in links]
-
-        volumes += [
+        links = []
+        volumes = [
             '{0}:/etc/nginx/conf.d'.format(conf_path),
             '{0}:/var/log/nginx'.format(log_path),
         ]
 
-        containers = {n.split('_')[1]: n
-                      for n, __ in iter_containers()}
         dnsdock_alias = []
         volumes_from = []
 
-        for project in get_site_projects(running=True):
+        for project in Project.iter_projects():
             # shortcut
-            name = simple_name(project)
-            container_name = containers[name]
+            name = project.simple_name
+            site_conf_path = project.site_conf_path
+            if not site_conf_path:
+                continue
             # update alias
-            dnsdock_alias.append('{0}.nginx.{1}'.format(name, DOMAIN_SUFFIX))
+            dnsdock_alias.append('{0}.nginx.{1}'.format(name,
+                                                        config.domain_suffix))
+            # get container
+            container = project.containers([name])[0]
             # updates volumes from to share between site and nginx containers
-            volumes_from.append(container_name)
+            volumes_from.append(container.name)
             # add link to nginx
-            links.append('{0}:{1}.{2}'.format(container_name, name,
-                                              DOMAIN_SUFFIX))
+            links.append('{0}:{1}.{2}'.format(container.name, name,
+                                              config.domain_suffix))
             # copy nginx site conf
-            shutil.copy(os.path.join(get_bag8_path(project), 'site.conf'),
-                        os.path.join(conf_path, '{0}.conf'.format(project)))
+            shutil.copy(site_conf_path,
+                        os.path.join(conf_path, '{0}.conf'.format(name)))
 
-        docker_args = [
+        args = [
             'docker',
             'run',
             '-d',
-            '-e DNSDOCK_ALIAS={0}'.format(','.join(dnsdock_alias)),
-            '--name {0}_nginx_1'.format(PREFIX),  # TODO get prefix from cli
+            '-e', 'DNSDOCK_ALIAS={0}'.format(','.join(dnsdock_alias)),
+            '--name', 'nginx',
             '-p', '0.0.0.0:80:80',
             '-p', '0.0.0.0:443:443',
-            '--hostname www.nginx.{0}'.format(DOMAIN_SUFFIX),
-            ' '.join(['--volumes-from {0}'.format(v) for v in volumes_from]),
-            ' '.join(['-v {0}'.format(v) for v in volumes]),
-            ' '.join(['--link {0}'.format(l) for l in links]),
+            '--hostname', 'www.nginx.{0}'.format(config.domain_suffix),
+        ]
+        args = sum([['--volumes-from', v] for v in volumes_from], args)
+        args = sum([['-v', v] for v in volumes], args)
+        args = sum([['--link', l] for l in links], args)
+        args += [
             'nginx',
         ]
-
-        return call(' '.join(docker_args))
-
-    def render(self, environment, links, ports, user, volumes, no_volumes,
-               prefix, develop):
-
-        environment, links, volumes = json_check(environment, links, volumes)
-
-        render_yml(self.project, environment=environment, links=links,
-                   ports=ports, user=user, volumes=volumes,
-                   no_volumes=no_volumes, prefix=prefix,
-                   develop=develop)
+        return check_call(args)
