@@ -17,9 +17,12 @@ from bag8.yaml import Yaml
 
 class Project(ComposeProject):
 
-    def __init__(self, name, develop=False):
+    def __init__(self, name, develop=False, prefix=None):
 
-        self.name = name
+        self.name = simple_name(prefix or name)
+
+        self.prefix = prefix
+        self.bag8_project = name
 
         self.config = Config()
         self.develop = develop
@@ -31,14 +34,14 @@ class Project(ComposeProject):
 
     @property
     def simple_name(self):
-        return simple_name(self.name)
+        return simple_name(self.bag8_project)
 
     @property
     def bag8_path(self):
         for path, _project in self.config.iter_data_paths():
-            if _project == self.name:
+            if _project == self.bag8_project:
                 return os.path.join(path, _project)
-        raise NoProjectYaml('missing dir for: {0}'.format(self.name))
+        raise NoProjectYaml('missing dir for: {0}'.format(self.bag8_project))
 
     @property
     def temp_path(self):
@@ -64,7 +67,7 @@ class Project(ComposeProject):
     @property
     def build_path(self):
         if not os.path.exists(os.path.join(self.bag8_path, 'Dockerfile')):
-            raise NoDockerfile('missing Dockerfile for: {0}'.format(self.name))
+            raise NoDockerfile('missing Dockerfile for: {0}'.format(self.bag8_project))  # noqa
         return self.bag8_path
 
     @property
@@ -93,11 +96,12 @@ class Project(ComposeProject):
     @classmethod
     def iter_projects(cls):
         for c in docker_client().containers():
+            project = c['Labels'].get('com.docker.compose.project')
             name = c['Labels'].get('com.docker.compose.service')
             # not a compose project
             if not name:
                 continue
-            yield Project(name)
+            yield Project(name, prefix=project)
 
     def iter_deps_names(self, _wrap=True):
 
@@ -124,10 +128,10 @@ class Project(ComposeProject):
         return [Project(n) for n in self.deps_names]
 
     @classmethod
-    def from_dicts(cls, name, service_dicts, client):
+    def from_dicts(cls, name, service_dicts, client, prefix=None):
         """Overrides compose method to use custom service class
         """
-        project = cls(name)
+        project = cls(name, prefix=prefix)
         for service_dict in sort_service_dicts(service_dicts):
             links = project.get_links(service_dict)
             volumes_from = project.get_volumes_from(service_dict)
@@ -146,7 +150,8 @@ class Project(ComposeProject):
             _yaml = Yaml(self)
             self._services = Project.from_dicts(self.name,
                                                 _yaml.service_dicts,
-                                                self.client).services
+                                                self.client,
+                                                prefix=self.prefix).services
         return self._services
 
     @services.setter

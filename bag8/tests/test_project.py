@@ -7,6 +7,7 @@ import pytest
 from bag8.project import Project
 
 
+@pytest.mark.synchronous
 @pytest.mark.needdocker()
 def test_rmi():
 
@@ -20,6 +21,7 @@ def test_rmi():
     assert len(project.client.images('bag8/busybox')) == 0
 
 
+@pytest.mark.synchronous
 @pytest.mark.needdocker()
 def test_build():
 

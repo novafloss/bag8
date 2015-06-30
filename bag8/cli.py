@@ -48,12 +48,14 @@ def build(cache, project):
               help='Command to exec in a running container, default: None.')
 @click.option('-i', '--interactive', default=isatty, is_flag=True,
               help="Use tty mode or not, default: isatty ?")
-def develop(command, interactive, project):
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def develop(command, interactive, prefix, project):
     """Drops you in develop environment of your project.
     """
     Tools().dns()
 
-    p = Project(project, develop=True)
+    p = Project(project, develop=True, prefix=prefix)
 
     # running
     if p.containers([p.name]):
@@ -85,12 +87,14 @@ def dns():
 @click.argument('project', default=cwdname)
 @click.option('-c', '--command', default=None,
               help='Command to exec in a running container, default: None.')
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
 @click.option('-s', '--service', default=None,
               help='Service container we want exec, default: project.name.')
-def execute(command, project, service):
+def execute(command, prefix, project, service):
     """Exec command in a running container for a given project.
     """
-    p = Project(project)
+    p = Project(project, prefix=prefix)
     p.execute(command=command, service_name=service)
 
 
@@ -98,12 +102,14 @@ def execute(command, project, service):
 @click.argument('project', default=cwdname)
 @click.option('--follow/--no-follow', default=None,
               help='Follow the logs, default: depend if running.')
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
 @click.option('-s', '--service', default=None,
               help='Service container we want the log, default: project.name.')
-def logs(follow, project, service):
+def logs(follow, prefix, project, service):
     """Get logs for a project related container.
     """
-    p = Project(project)
+    p = Project(project, prefix=prefix)
     s = service or project
 
     args = ['docker', 'logs']
@@ -118,7 +124,7 @@ def logs(follow, project, service):
     names = [c.name for c in p.containers([s], stopped=True)]
 
     if not names:
-        return click.echo('no container for {0}_{0}_x'.format(project, s))
+        return click.echo('no container for {0}_{1}_x'.format(p.name, s))
 
     # do logs
     exec_(args + names)
@@ -158,10 +164,12 @@ def push(project):
 
 @bag8.command()
 @click.argument('project', default=cwdname)
-def rm(project):
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def rm(prefix, project):
     """Removes containers for a given project.
     """
-    p = Project(project, develop=develop)
+    p = Project(project, prefix=prefix)
     p.stop(timeout=0)
     p.remove_stopped()
 
@@ -181,11 +189,13 @@ def rmi(project):
 @click.option('-d', '--develop', default=False, is_flag=True,
               help='Start the containers in develop mode. default: False.')
 @click.option('--keep', default=False, is_flag=True,
-              help="Do not --rm after, default: False")
-def run(command, develop, keep, project):
+              help='Do not --rm after, default: False')
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def run(command, develop, keep, prefix, project):
     """Start containers for a given project.
     """
-    p = Project(project, develop=develop)
+    p = Project(project, develop=develop, prefix=prefix)
     p.run(command=command, remove=not keep)
 
 
@@ -210,19 +220,23 @@ def setup():
 @click.argument('project', default=cwdname)
 @click.option('-i', '--interactive', default=False, is_flag=True,
               help='Start previous runned/keeped container, default: False.')
-def start(interactive, project):
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def start(interactive, prefix, project):
     """Start containers for a given project.
     """
-    p = Project(project)
+    p = Project(project, prefix=prefix)
     p.start(interactive=interactive)
 
 
 @bag8.command()
 @click.argument('project', default=cwdname)
-def stop(project):
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def stop(project, prefix):
     """Stop containers for a given project.
     """
-    p = Project(project)
+    p = Project(project, prefix=prefix)
     p.stop(timeout=1)
 
 
@@ -230,8 +244,10 @@ def stop(project):
 @click.argument('project', default=cwdname)
 @click.option('-d', '--develop', default=False, is_flag=True,
               help='Start the containers in develop mode. default: False.')
-def up(develop, project):
+@click.option('-p', '--prefix', default=None,
+              help='Project prefix. default: project.name.')
+def up(develop, prefix, project):
     """Up containers for a given project
     """
-    p = Project(project, develop=develop)
+    p = Project(project, develop=develop, prefix=prefix)
     p.up(allow_recreate=False)

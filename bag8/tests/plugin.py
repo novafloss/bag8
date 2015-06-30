@@ -69,15 +69,15 @@ def _setup(config_path, slave_id):
 
 def _rm_all(slave_id):
     try:
-        check_call(['bag8', 'rm', 'busybox'])
+        check_call(['bag8', 'rm', 'busybox', '-p', slave_id])
     except CheckCallFailed:
         pass
     try:
-        check_call(['docker', 'rm', '-f', 'dnsdock'])
+        check_call(['docker', 'rm', 'dnsdock'])
     except CheckCallFailed:
         pass
     try:
-        check_call(['docker', 'rm', '-f', 'nginx'])
+        check_call(['docker', 'rm', 'nginx'])
     except CheckCallFailed:
         pass
 
