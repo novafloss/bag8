@@ -166,12 +166,15 @@ def push(project):
 @click.argument('project', default=cwdname)
 @click.option('-p', '--prefix', default=None,
               help='Project prefix. default: project.name.')
-def rm(prefix, project):
+@click.option('-s', '--service', default=None,
+              help='Service container we want exec, default: project.name.')
+def rm(prefix, project, service):
     """Removes containers for a given project.
     """
     p = Project(project, prefix=prefix)
-    p.stop(timeout=0)
-    p.remove_stopped()
+    service_names = None if not service else [service]
+    p.stop(service_names=service_names, timeout=0)
+    p.remove_stopped(service_names=service_names)
 
 
 @bag8.command()
@@ -222,22 +225,28 @@ def setup():
               help='Start previous runned/keeped container, default: False.')
 @click.option('-p', '--prefix', default=None,
               help='Project prefix. default: project.name.')
-def start(interactive, prefix, project):
+@click.option('-s', '--service', default=None,
+              help='Service container we want start, default: None.')
+def start(interactive, prefix, project, service):
     """Start containers for a given project.
     """
     p = Project(project, prefix=prefix)
-    p.start(interactive=interactive)
+    service_names = None if not service else [service]
+    p.start(interactive=interactive, service_names=service_names)
 
 
 @bag8.command()
 @click.argument('project', default=cwdname)
 @click.option('-p', '--prefix', default=None,
               help='Project prefix. default: project.name.')
-def stop(project, prefix):
+@click.option('-s', '--service', default=None,
+              help='Service container we want stop, default: None.')
+def stop(project, prefix, service):
     """Stop containers for a given project.
     """
     p = Project(project, prefix=prefix)
-    p.stop(timeout=1)
+    service_names = None if not service else [service]
+    p.stop(service_names=service_names, timeout=0)
 
 
 @bag8.command()
