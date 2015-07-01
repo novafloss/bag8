@@ -16,6 +16,7 @@ from bag8.tools import Tools
 from bag8.utils import check_call
 from bag8.utils import exec_
 from bag8.utils import inspect
+from bag8.utils import simple_name
 
 from compose.cli.main import setup_logging
 
@@ -58,10 +59,10 @@ def develop(command, interactive, prefix, project):
     p = Project(project, develop=True, prefix=prefix)
 
     # running
-    if p.containers([p.name]):
+    if p.get_container_name(p.name):
         pass
     # not running
-    if p.containers([p.name], stopped=True):
+    elif p.get_container_name(p.name, stopped=True):
         p.start()
     # not exist
     else:
@@ -110,24 +111,21 @@ def logs(follow, prefix, project, service):
     """Get logs for a project related container.
     """
     p = Project(project, prefix=prefix)
-    s = service or project
+    s = simple_name(service or project)
 
     args = ['docker', 'logs']
 
-    names = [c.name for c in p.containers([s])]
-
     # log follow if running or explicit
-    if names and follow is not False:
+    c = p.get_container_name(s)
+    if c and follow is not False:
         args += ['-f']
 
-    # get missing names if stopped
-    names = [c.name for c in p.containers([s], stopped=True)]
-
-    if not names:
-        return click.echo('no container for {0}_{1}_x'.format(p.name, s))
-
     # do logs
-    exec_(args + names)
+    c = p.get_container_name(s, stopped=True)
+    if c:
+        return exec_(args + [c])
+
+    click.echo('no container for {0}_{1}_x'.format(p.name, s))
 
 
 @bag8.command()

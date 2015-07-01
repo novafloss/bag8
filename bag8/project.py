@@ -127,6 +127,15 @@ class Project(ComposeProject):
     def deps(self):
         return [Project(n) for n in self.deps_names]
 
+    def get_container_names(self, stopped=False):
+        return [c.name for c in self.containers(stopped=stopped)]
+
+    def get_container_name(self, service_name, stopped=False):
+        container_prefix = '_'.join([self.name, service_name])
+        for container_name in self.get_container_names(stopped=stopped):
+            if container_name.startswith(container_prefix):
+                return container_name
+
     @classmethod
     def from_dicts(cls, name, service_dicts, client, prefix=None):
         """Overrides compose method to use custom service class
