@@ -194,7 +194,7 @@ class Project(ComposeProject):
             self.up(
                 service_names=deps,
                 start_deps=True,
-                allow_recreate=False,
+                allow_recreate=options.get('allow_recreate', False),
                 insecure_registry=options.get('insecure_registry'),
             )
         service.run(**options)
