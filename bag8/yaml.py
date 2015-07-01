@@ -89,13 +89,14 @@ class Yaml(object):
                 if 'environment' not in self._data[app]:
                     self._data[app]['environment'] = []
                 self._data[app]['environment'].append(env)
+            if 'dev_command' in self._data[app]:
+                self._data[app]['command'] = self._data[app]['dev_command']
 
         # Clean compose extensions
         for key in self._data:
-            if 'dev_volumes' in self._data[key]:
-                del self._data[key]['dev_volumes']
-            if 'dev_environment' in self._data[key]:
-                del self._data[key]['dev_environment']
+            for k in ['dev_command', 'dev_environment', 'dev_volumes']:
+                if k in self._data[key]:
+                    del self._data[key][k]
 
         # add dockerfile info for build
         self._data[app]['dockerfile'] = os.path.join(self.project.bag8_path,
