@@ -23,7 +23,7 @@ install:
 
 # target: install-test - Install tests requirements.
 .PHONY: install-test
-install-test:
+install-test: install
 	pip install -r requirements.tests.txt
 
 # target: test-flake8 - Run flake8 tests.
