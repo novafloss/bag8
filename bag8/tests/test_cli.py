@@ -69,6 +69,28 @@ def test_develop(slave_id):
 
 
 @pytest.mark.needdocker()
+def test_develop_no_recreate(slave_id):
+
+    # develop
+    check_call(['bag8', 'develop', 'busybox', '-c', 'echo "hi"',
+                '-p', slave_id])
+
+    container = '{0}_busybox_1'.format(slave_id)
+
+    # rm
+    out, err, code = check_call(['docker', 'rm', '-f', container])
+    assert code == 0, err + '\n' + out
+    assert out.strip() == container
+
+    # should not recreate container link
+    out, err, code = check_call(['bag8', 'develop', 'busybox',
+                                 '-c', 'echo "hi"', '-p', slave_id])
+    assert code == 0, err + '\n' + out
+    assert err.strip() == 'Creating {0}_busybox_1...'.format(slave_id)
+    assert out.strip() == 'hi'
+
+
+@pytest.mark.needdocker()
 def test_dns():
 
     # not exist -> create

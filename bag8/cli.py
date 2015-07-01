@@ -65,7 +65,7 @@ def develop(command, interactive, prefix, project):
         p.start()
     # not exist
     else:
-        p.up()
+        p.up(allow_recreate=False)
 
     p.execute(command=command, interactive=interactive)
 
