@@ -46,7 +46,7 @@ class Yaml(object):
             links = []
             for link in v.get('links', []):
                 try:
-                    name, alias = link.split(':', 1)
+                    _, name = link.split(':', 1)
                 except ValueError:
                     name = link
                 links.append(name)
