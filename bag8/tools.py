@@ -108,7 +108,7 @@ server=/{1}/{2}
                 "-domain={0}".format(config.domain_suffix)
             ])
 
-    def nginx(self):
+    def nginx(self, no_ports=False):
 
         config = Config()
 
@@ -157,10 +157,13 @@ server=/{1}/{2}
             '-d',
             '-e', 'DNSDOCK_ALIAS={0}'.format(','.join(dnsdock_alias)),
             '--name', 'nginx',
-            '-p', '0.0.0.0:80:80',
-            '-p', '0.0.0.0:443:443',
             '--hostname', 'www.nginx.{0}'.format(config.domain_suffix),
         ]
+        if not no_ports:
+            args += [
+                '-p', '0.0.0.0:80:80',
+                '-p', '0.0.0.0:443:443',
+            ]
         args = sum([['--volumes-from', v] for v in volumes_from], args)
         args = sum([['-v', v] for v in volumes], args)
         args = sum([['--link', l] for l in links], args)

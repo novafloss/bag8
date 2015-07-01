@@ -144,13 +144,14 @@ def test_logs(slave_id):
     assert out.strip() == 'no container for {0}_what_x'.format(slave_id)
 
 
+@pytest.mark.synchronous
 @pytest.mark.needdocker()
 def test_nginx(slave_id):
 
     # up a container to proxify
     check_call(['bag8', 'up', 'busybox', '-p', slave_id])
 
-    out, err, code = check_call(['bag8', 'nginx'])
+    out, err, code = check_call(['bag8', 'nginx', '--no-ports'])
     assert code == 0, err + '\n' + out
     assert inspect('nginx')['State']['Running']
 

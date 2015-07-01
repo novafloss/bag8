@@ -131,7 +131,9 @@ def logs(follow, prefix, project, service):
 
 
 @bag8.command()
-def nginx():
+@click.option('--no-ports', default=False, is_flag=True,
+              help='Test mode ? no port binding.')
+def nginx(no_ports):
     """Run nginx container linked with all available sites.
     """
     # stop previous nginx if exist
@@ -141,7 +143,7 @@ def nginx():
     except APIError:
         pass
     # start a new one
-    out, err, code = Tools().nginx()
+    out, err, code = Tools().nginx(no_ports=no_ports)
 
 
 @bag8.command()
