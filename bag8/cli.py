@@ -16,6 +16,7 @@ from bag8.tools import Tools
 from bag8.utils import check_call
 from bag8.utils import exec_
 from bag8.utils import inspect
+from bag8.utils import simple_name
 
 from compose.cli.main import setup_logging
 
@@ -58,10 +59,10 @@ def develop(command, interactive, prefix, project):
     p = Project(project, develop=True, prefix=prefix)
 
     # running
-    if p.containers([p.name]):
+    if p.get_container_name(p.name):
         pass
     # not running
-    if p.containers([p.name], stopped=True):
+    elif p.get_container_name(p.name, stopped=True):
         p.start()
     # not exist
     else:
@@ -110,28 +111,27 @@ def logs(follow, prefix, project, service):
     """Get logs for a project related container.
     """
     p = Project(project, prefix=prefix)
-    s = service or project
+    s = simple_name(service or project)
 
     args = ['docker', 'logs']
 
-    names = [c.name for c in p.containers([s])]
-
     # log follow if running or explicit
-    if names and follow is not False:
+    c = p.get_container_name(s)
+    if c and follow is not False:
         args += ['-f']
 
-    # get missing names if stopped
-    names = [c.name for c in p.containers([s], stopped=True)]
-
-    if not names:
-        return click.echo('no container for {0}_{1}_x'.format(p.name, s))
-
     # do logs
-    exec_(args + names)
+    c = p.get_container_name(s, stopped=True)
+    if c:
+        return exec_(args + [c])
+
+    click.echo('no container for {0}_{1}_x'.format(p.name, s))
 
 
 @bag8.command()
-def nginx():
+@click.option('--no-ports', default=False, is_flag=True,
+              help='Test mode ? no port binding.')
+def nginx(no_ports):
     """Run nginx container linked with all available sites.
     """
     # stop previous nginx if exist
@@ -141,7 +141,7 @@ def nginx():
     except APIError:
         pass
     # start a new one
-    out, err, code = Tools().nginx()
+    out, err, code = Tools().nginx(no_ports=no_ports)
 
 
 @bag8.command()
@@ -166,12 +166,15 @@ def push(project):
 @click.argument('project', default=cwdname)
 @click.option('-p', '--prefix', default=None,
               help='Project prefix. default: project.name.')
-def rm(prefix, project):
+@click.option('-s', '--service', default=None,
+              help='Service container we want exec, default: project.name.')
+def rm(prefix, project, service):
     """Removes containers for a given project.
     """
     p = Project(project, prefix=prefix)
-    p.stop(timeout=0)
-    p.remove_stopped()
+    service_names = None if not service else [service]
+    p.stop(service_names=service_names, timeout=0)
+    p.remove_stopped(service_names=service_names)
 
 
 @bag8.command()
@@ -222,22 +225,28 @@ def setup():
               help='Start previous runned/keeped container, default: False.')
 @click.option('-p', '--prefix', default=None,
               help='Project prefix. default: project.name.')
-def start(interactive, prefix, project):
+@click.option('-s', '--service', default=None,
+              help='Service container we want start, default: None.')
+def start(interactive, prefix, project, service):
     """Start containers for a given project.
     """
     p = Project(project, prefix=prefix)
-    p.start(interactive=interactive)
+    service_names = None if not service else [service]
+    p.start(interactive=interactive, service_names=service_names)
 
 
 @bag8.command()
 @click.argument('project', default=cwdname)
 @click.option('-p', '--prefix', default=None,
               help='Project prefix. default: project.name.')
-def stop(project, prefix):
+@click.option('-s', '--service', default=None,
+              help='Service container we want stop, default: None.')
+def stop(project, prefix, service):
     """Stop containers for a given project.
     """
     p = Project(project, prefix=prefix)
-    p.stop(timeout=1)
+    service_names = None if not service else [service]
+    p.stop(service_names=service_names, timeout=0)
 
 
 @bag8.command()

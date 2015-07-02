@@ -127,6 +127,15 @@ class Project(ComposeProject):
     def deps(self):
         return [Project(n) for n in self.deps_names]
 
+    def get_container_names(self, stopped=False):
+        return [c.name for c in self.containers(stopped=stopped)]
+
+    def get_container_name(self, service_name, stopped=False):
+        container_prefix = '_'.join([self.name, service_name])
+        for container_name in self.get_container_names(stopped=stopped):
+            if container_name.startswith(container_prefix):
+                return container_name
+
     @classmethod
     def from_dicts(cls, name, service_dicts, client, prefix=None):
         """Overrides compose method to use custom service class
@@ -185,19 +194,17 @@ class Project(ComposeProject):
             self.up(
                 service_names=deps,
                 start_deps=True,
-                allow_recreate=False,
+                allow_recreate=options.get('allow_recreate', False),
                 insecure_registry=options.get('insecure_registry'),
             )
         service.run(**options)
 
     def start(self, service_names=None, interactive=False, **options):
-        service = self.get_service(self.simple_name)
-        deps = service.get_linked_names()
-        for dep_service in self.get_services(service_names):
-            if dep_service.name not in deps:
-                continue
-            dep_service.start(**options)
-        service.start(interactive=interactive, **options)
+        for service in self.get_services(service_names):
+            kwargs = options.copy()
+            if service.name == self.simple_name:
+                kwargs['interactive'] = interactive
+            service.start(**kwargs)
 
     def execute(self, service_name=None, **options):
         service = self.get_service(service_name or self.simple_name)

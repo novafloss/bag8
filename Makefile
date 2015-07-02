@@ -23,7 +23,7 @@ install:
 
 # target: install-test - Install tests requirements.
 .PHONY: install-test
-install-test:
+install-test: install
 	pip install -r requirements.tests.txt
 
 # target: test-flake8 - Run flake8 tests.
@@ -34,13 +34,13 @@ test-flake8:
 # target: test-debug - Run tests in fail fast and very verbose way.
 .PHONY: test-debug
 test-debug: clean test-flake8
-	py.test -sx -vv
+	py.test -sx -vv bag8
 
 # target: test-xdist - Run parallels tests.
 .PHONY: test-xdist
 test-xdist: clean test-flake8
-	py.test -x -m "synchronous"
-	py.test -n3 --boxed -m "not synchronous"
+	py.test -x -m "exclusive" bag8
+	py.test -n3 --boxed -m "not exclusive" bag8
 
 # target: test - Run tests for several versions of python with tox.
 .PHONY: test
