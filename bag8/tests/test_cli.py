@@ -15,7 +15,7 @@ from bag8.utils import inspect
 check_call = partial(base_check_call, exit=False)
 
 
-@pytest.mark.synchronous
+@pytest.mark.exclusive
 @pytest.mark.needdocker()
 def test_build(client):
 
@@ -144,7 +144,7 @@ def test_logs(slave_id):
     assert out.strip() == 'no container for {0}_what_x'.format(slave_id)
 
 
-@pytest.mark.synchronous
+@pytest.mark.exclusive
 @pytest.mark.needdocker()
 def test_nginx(slave_id):
 
@@ -156,7 +156,7 @@ def test_nginx(slave_id):
     assert inspect('nginx')['State']['Running']
 
 
-@pytest.mark.synchronous
+@pytest.mark.exclusive
 @pytest.mark.needdocker()
 def test_pull(client):
 
@@ -202,7 +202,7 @@ def test_rm(slave_id):
     assert [c.name for c in p.containers()][0] == '{0}_link_1'.format(slave_id)
 
 
-@pytest.mark.synchronous
+@pytest.mark.exclusive
 @pytest.mark.needdocker()
 def test_rmi(client):
 
