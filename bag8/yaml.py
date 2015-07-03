@@ -13,6 +13,7 @@ class Yaml(object):
     def __init__(self, project):
         self.project = project
         self._data = None
+        self._bag8_names = {}
 
     def _get_customized_yml(self, project):
         """Prefixes project sections with project name, ex: pg > busyboxpg.
@@ -70,11 +71,16 @@ class Yaml(object):
         # ensure good app name
         app = self.project.simple_name
 
+        # keep bag8 name mapping
+        self._bag8_names[app] = self.project.bag8_name
+
         # clean links according tree permitted names and project accepted ones,
         # ex.: dummy.js:dummyjs.docker > dummyjs:dummyjs.docker
         links = []
         for link in self._data[app].get('links', []):
-            name = simple_name(link.split(':')[0])
+            bag8_name = link.split(':')[0]
+            name = simple_name(bag8_name)
+            self._bag8_names[name] = bag8_name
             link = name + ':' + link.split(':')[1] if ':' in link else name
             links.append(link)
         self._data[app]['links'] = links
@@ -113,6 +119,7 @@ class Yaml(object):
         service_dicts = []
         for k, v in self.data.items():
             v['name'] = k
+            v['bag8_name'] = self._bag8_names.get(k)
             service_dicts.append(v)
         return service_dicts
 

@@ -4,10 +4,13 @@ import os
 import yaml
 
 from compose.cli.docker_client import docker_client
+from compose.const import LABEL_PROJECT
 from compose.project import Project as ComposeProject
 from compose.project import sort_service_dicts
 
 from bag8.config import Config
+from bag8.const import LABEL_BAG8_SERVICE
+from bag8.const import LABEL_BAG8_PROJECT
 from bag8.exceptions import NoDockerfile
 from bag8.exceptions import NoProjectYaml
 from bag8.service import Service
@@ -22,7 +25,7 @@ class Project(ComposeProject):
         self.name = simple_name(prefix or name)
 
         self.prefix = prefix
-        self.bag8_project = name
+        self.bag8_name = name
 
         self.config = Config()
         self.develop = develop
@@ -32,16 +35,21 @@ class Project(ComposeProject):
 
         super(Project, self).__init__(self.name, [], docker_client())
 
+    def labels(self, one_off=False):
+        return super(Project, self).labels(one_off=one_off) + [
+            '{0}={1}'.format(LABEL_BAG8_PROJECT, self.bag8_name),
+        ]
+
     @property
     def simple_name(self):
-        return simple_name(self.bag8_project)
+        return simple_name(self.bag8_name)
 
     @property
     def bag8_path(self):
         for path, _project in self.config.iter_data_paths():
-            if _project == self.bag8_project:
+            if _project == self.bag8_name:
                 return os.path.join(path, _project)
-        raise NoProjectYaml('missing dir for: {0}'.format(self.bag8_project))
+        raise NoProjectYaml('missing dir for: {0}'.format(self.bag8_name))
 
     @property
     def temp_path(self):
@@ -67,7 +75,7 @@ class Project(ComposeProject):
     @property
     def build_path(self):
         if not os.path.exists(os.path.join(self.bag8_path, 'Dockerfile')):
-            raise NoDockerfile('missing Dockerfile for: {0}'.format(self.bag8_project))  # noqa
+            raise NoDockerfile('missing Dockerfile for: {0}'.format(self.bag8_name))  # noqa
         return self.bag8_path
 
     @property
@@ -95,13 +103,18 @@ class Project(ComposeProject):
 
     @classmethod
     def iter_projects(cls):
+        __yielded = []
         for c in docker_client().containers():
-            project = c['Labels'].get('com.docker.compose.project')
-            name = c['Labels'].get('com.docker.compose.service')
+            name = c['Labels'].get(LABEL_BAG8_SERVICE)
+            prefix = c['Labels'].get(LABEL_PROJECT)
             # not a compose project
             if not name:
                 continue
-            yield Project(name, prefix=project)
+            key = '{0}:{1}'.format(name, prefix)
+            if key in __yielded:
+                continue
+            __yielded.append(key)
+            yield Project(name, prefix=prefix)
 
     def iter_deps_names(self, _wrap=True):
 
@@ -137,7 +150,8 @@ class Project(ComposeProject):
                 return container_name
 
     @classmethod
-    def from_dicts(cls, name, service_dicts, client, prefix=None):
+    def from_dicts(cls, name, service_dicts, client, bag8_name='',
+                   prefix=None):
         """Overrides compose method to use custom service class
         """
         project = cls(name, prefix=prefix)
@@ -147,6 +161,7 @@ class Project(ComposeProject):
             net = project.get_net(service_dict)
             project._services.append(Service(client=client,
                                              project=name,
+                                             bag8_project=bag8_name,
                                              links=links,
                                              net=net,
                                              volumes_from=volumes_from,
@@ -160,6 +175,7 @@ class Project(ComposeProject):
             self._services = Project.from_dicts(self.name,
                                                 _yaml.service_dicts,
                                                 self.client,
+                                                bag8_name=self.bag8_name,
                                                 prefix=self.prefix).services
         return self._services
 

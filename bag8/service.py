@@ -14,17 +14,28 @@ from compose.progress_stream import stream_output
 from compose.service import Service as ComposeService
 from compose.service import parse_repository_tag
 
+from bag8.const import LABEL_BAG8_PROJECT
+from bag8.const import LABEL_BAG8_SERVICE
 from bag8.utils import exec_
 
 
 class Service(ComposeService):
 
-    def __init__(self, name, image_name=None, **kwargs):
+    def __init__(self, name, bag8_name='', bag8_project='', image_name=None,
+                 **kwargs):
         super(Service, self).__init__(name, **kwargs)
+        self.bag8_name = bag8_name
+        self.bag8_project = bag8_project
         # hack to propagate build path and image name
         if 'dockerfile' in self.options:
             self.options['build'] = os.path.dirname(self.options['dockerfile'])
             del self.options['dockerfile']
+
+    def labels(self, one_off=False):
+        return super(Service, self).labels(one_off=one_off) + [
+            '{0}={1}'.format(LABEL_BAG8_PROJECT, self.bag8_project),
+            '{0}={1}'.format(LABEL_BAG8_SERVICE, self.bag8_name),
+        ]
 
     @property
     def image_name(self):

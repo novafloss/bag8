@@ -70,6 +70,7 @@ def test_service_dicts():
     assert sorted(Yaml(project).service_dicts) == sorted([
         {
             'name': 'busybox',
+            'bag8_name': 'busybox',
             'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
             'environment': [
                 'DNSDOCK_ALIAS=busybox.docker',
@@ -83,6 +84,7 @@ def test_service_dicts():
         },
         {
             'name': 'link',
+            'bag8_name': 'link',
             'environment': [
                 'DNSDOCK_ALIAS=link.docker',
                 'DNSDOCK_IMAGE=',
@@ -97,6 +99,7 @@ def test_service_dicts():
     assert sorted(Yaml(project).service_dicts) == sorted([
         {
             'name': 'busybox',
+            'bag8_name': 'busybox',
             'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
             'environment': [
                 'DNSDOCK_ALIAS=busybox.docker',
@@ -114,11 +117,29 @@ def test_service_dicts():
         },
         {
             'name': 'link',
+            'bag8_name': 'link',
             'environment': [
                 'DNSDOCK_ALIAS=link.docker',
                 'DNSDOCK_IMAGE=',
                 'BAG8_LINKS='
             ],
             'image': 'bag8/busybox'
+        }
+    ])
+
+    # complex name
+    project = Project('link.2')
+    assert sorted(Yaml(project).service_dicts) == sorted([
+        {
+            'name': 'link2',
+            'bag8_name': 'link.2',
+            'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
+            'environment': [
+                'DNSDOCK_ALIAS=link2.docker',
+                'DNSDOCK_IMAGE=',
+                'BAG8_LINKS='
+            ],
+            'image': 'bag8/busybox',
+            'links': []
         }
     ])
