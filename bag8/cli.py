@@ -59,10 +59,10 @@ def develop(command, interactive, prefix, project):
     p = Project(project, develop=True, prefix=prefix)
 
     # running
-    if p.get_container_name(p.name):
+    if p.get_container_name():
         pass
     # not running
-    elif p.get_container_name(p.name, stopped=True):
+    elif p.get_container_name(stopped=True):
         p.start()
     # not exist
     else:
