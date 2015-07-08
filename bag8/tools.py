@@ -172,4 +172,4 @@ server=/{1}/{2}
         args += [
             'nginx',
         ]
-        return check_call(args)
+        return check_call([str(a) for a in args])
