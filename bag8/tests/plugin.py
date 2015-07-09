@@ -73,6 +73,10 @@ def _rm_all(slave_id):
     except CheckCallFailed:
         pass
     try:
+        check_call(['bag8', 'rm', 'link.2', '-p', slave_id])
+    except CheckCallFailed:
+        pass
+    try:
         check_call(['docker', 'rm', 'dnsdock'])
     except CheckCallFailed:
         pass

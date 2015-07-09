@@ -10,6 +10,7 @@ import dockerpty
 
 from docker.errors import APIError
 
+from compose.container import Container
 from compose.progress_stream import stream_output
 from compose.service import Service as ComposeService
 from compose.service import parse_repository_tag
@@ -31,8 +32,19 @@ class Service(ComposeService):
             self.options['build'] = os.path.dirname(self.options['dockerfile'])
             del self.options['dockerfile']
 
-    def labels(self, one_off=False):
-        return super(Service, self).labels(one_off=one_off) + [
+    def containers(self, stopped=False, one_off=False, bag8_labels=False):
+        return [
+            Container.from_ps(self.client, container)
+            for container in self.client.containers(
+                all=stopped,
+                filters={'label': self.labels(one_off=one_off,
+                                              bag8_labels=bag8_labels)})]
+
+    def labels(self, one_off=False, bag8_labels=True):
+        labels = super(Service, self).labels(one_off=one_off)
+        if not bag8_labels:
+            return labels
+        return labels + [
             '{0}={1}'.format(LABEL_BAG8_PROJECT, self.bag8_project),
             '{0}={1}'.format(LABEL_BAG8_SERVICE, self.bag8_name),
         ]
