@@ -18,6 +18,7 @@ from bag8.utils import exec_
 from bag8.utils import inspect
 from bag8.utils import simple_name
 
+from compose.service import BuildError
 from compose.cli.main import setup_logging
 
 
@@ -40,7 +41,10 @@ def bag8():
               help="Use cache, default: True")
 def build(cache, project):
     p = Project(project)
-    p.build(no_cache=not cache)
+    try:
+        p.build(no_cache=not cache)
+    except BuildError:
+        sys.exit(1)
 
 
 @bag8.command()
