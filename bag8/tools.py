@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import click
+import logging
 import os
 import re
 import shutil
@@ -15,6 +16,9 @@ from bag8.utils import check_call
 from bag8.utils import confirm
 from bag8.utils import inspect
 from bag8.utils import write_conf
+
+
+log = logging.getLogger(__name__)
 
 
 class Tools(object):
@@ -97,6 +101,7 @@ server=/{1}/{2}
                 return check_call(['docker', 'start', 'dnsdock'])
         # not exist
         except APIError:
+            log.info("Starting docker DNS server.")
             return check_call([
                 'docker',
                 'run',
