@@ -11,6 +11,7 @@ import click
 from docker.errors import APIError
 
 from bag8.config import Config
+from bag8.exceptions import NoProjectYaml
 from bag8.project import Project
 from bag8.tools import Tools
 from bag8.utils import check_call
@@ -61,6 +62,12 @@ def develop(command, interactive, prefix, project):
     Tools().dns()
 
     p = Project(project, develop=True, prefix=prefix)
+
+    try:
+        p.get_services()
+    except NoProjectYaml:
+        click.echo("Unknown bag8 project %s" % (project,))
+        sys.exit(1)
 
     # running
     if p.get_container_name():
