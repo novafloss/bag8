@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals  # noqa
 
+from datetime import datetime
 import os
 import yaml
 
@@ -37,6 +38,20 @@ class Project(ComposeProject):
         self._yaml = None
 
         super(Project, self).__init__(self.name, [], docker_client())
+
+    def auto_pull(self):
+        image, tag = self.image.split(':', 1)
+        images = self.client.images(image)
+        try:
+            image = images[0]
+        except IndexError:
+            self.pull()
+            return
+
+        image_date = datetime.fromtimestamp(image['Created'])
+        stat = os.stat(self.yaml_path)
+        compose_date = datetime.fromtimestamp(stat.st_mtime)
+        import ipdb; ipdb.set_trace()  # noqa
 
     def labels(self, one_off=False):
         return super(Project, self).labels(one_off=one_off) + [
@@ -206,6 +221,10 @@ class Project(ComposeProject):
     def rmi(self, service_names=None, force=False):
         for service in self.get_services(service_names):
             service.rmi(force=force)
+
+    def up(self, *a, **kw):
+        self.auto_pull()
+        return super(Project, self).up(*a, **kw)
 
     def run(self, **options):
         service = self.get_service(self.simple_name)
