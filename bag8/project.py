@@ -3,10 +3,13 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import yaml
 
+import click
+
 from compose.cli.docker_client import docker_client
 from compose.const import LABEL_PROJECT
 from compose.project import Project as ComposeProject
 from compose.project import sort_service_dicts
+from compose.project import NoSuchService
 
 from bag8.config import Config
 from bag8.const import LABEL_BAG8_SERVICE
@@ -110,7 +113,7 @@ class Project(ComposeProject):
             # not a compose project
             if not name:
                 continue
-            key = '{0}:{1}'.format(name, prefix)
+            key = '{0}:{1}'.format(prefix, name)
             if key in __yielded:
                 continue
             __yielded.append(key)
@@ -140,14 +143,15 @@ class Project(ComposeProject):
     def deps(self):
         return [Project(n) for n in self.deps_names]
 
-    def get_container_names(self, stopped=False):
-        return [c.name for c in self.containers(stopped=stopped)]
-
-    def get_container_name(self, service_name, stopped=False):
-        container_prefix = '_'.join([self.name, service_name])
-        for container_name in self.get_container_names(stopped=stopped):
-            if container_name.startswith(container_prefix):
-                return container_name
+    def get_container_name(self, service_name=None, stopped=False):
+        service_name = service_name or self.simple_name
+        try:
+            service = self.get_service(service_name)
+        except NoSuchService:
+            click.echo('No such service: {0}'.format(service_name), err=True)
+            return None
+        for c in service.containers(stopped=stopped):
+            return c.name
 
     @classmethod
     def from_dicts(cls, name, service_dicts, client, bag8_name='',

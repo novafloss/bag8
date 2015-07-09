@@ -137,15 +137,17 @@ server=/{1}/{2}
             site_conf_path = project.site_conf_path
             if not site_conf_path:
                 continue
+            # get container
+            container_name = project.get_container_name()
+            if not container_name:
+                continue
             # update alias
             dnsdock_alias.append('{0}.nginx.{1}'.format(name,
                                                         config.domain_suffix))
-            # get container
-            container = project.containers([name])[0]
             # updates volumes from to share between site and nginx containers
-            volumes_from.append(container.name)
+            volumes_from.append(container_name)
             # add link to nginx
-            links.append('{0}:{1}.{2}'.format(container.name, name,
+            links.append('{0}:{1}.{2}'.format(container_name, name,
                                               config.domain_suffix))
             # copy nginx site conf
             shutil.copy(site_conf_path,
@@ -170,4 +172,4 @@ server=/{1}/{2}
         args += [
             'nginx',
         ]
-        return check_call(args)
+        return check_call([str(a) for a in args])
