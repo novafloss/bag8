@@ -71,7 +71,7 @@ def write_conf(path, content, bak_path=None):
 
     # keep
     if bak_path:
-        call('cp', path, bak_path)
+        call(['cp', path, bak_path])
 
     cmd = [
         'sudo',
