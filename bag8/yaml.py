@@ -29,17 +29,22 @@ class Yaml(object):
 
         for k, v in yaml.load(open(project.yaml_path)).items():
 
+            # ensure environment for coming overinding
+            if 'environment' not in v:
+                v['environment'] = {}
+            # ensure common env section format -> list
+            elif isinstance(v['environment'], list):
+                v['environment'] = dict([l.split('=')
+                                         for l in v['environment']])
+
             # shortcuts
             name = k if k != 'app' else project.simple_name
             domain_suffix = project.config.domain_suffix
             domainname = v.get('domainname',
                                '{0}.{1}'.format(name, domain_suffix))
-            dnsdock_alias = 'DNSDOCK_ALIAS={0}'.format(domainname)
-            if dnsdock_alias not in v.get('environment', []):
-                if 'environment' not in v:
-                    v['environment'] = []
-                v['environment'].append(dnsdock_alias)
-            v['environment'].append('DNSDOCK_IMAGE=')
+            if 'DNSDOCK_ALIAS' not in v['environment']:
+                v['environment']['DNSDOCK_ALIAS'] = domainname
+            v['environment']['DNSDOCK_IMAGE'] = None
 
             # update sections
             custom_yml[name] = v
@@ -51,7 +56,7 @@ class Yaml(object):
                 except ValueError:
                     name = link
                 links.append(name)
-            v['environment'].append('BAG8_LINKS=' + ' '.join(links))
+            v['environment']['BAG8_LINKS'] = ' '.join(links) or None
 
         return custom_yml
 
@@ -85,16 +90,26 @@ class Yaml(object):
             links.append(link)
         self._data[app]['links'] = links
 
+        # ensure environment for coming overinding
+        if 'environment' not in self._data[app]:
+            self._data[app]['environment'] = {}
+        # ensure common env section format -> list
+        elif isinstance(self._data[app]['environment'], list):
+            self._data[app]['environment'] = \
+                dict([l.split('=') for l in self._data[app]['environment']])
+
         # Setup develop mode
         if self.project.develop:
             for volume in self._data[app].get('dev_volumes', []):
                 if 'volumes' not in self._data[app]:
                     self._data[app]['volumes'] = []
                 self._data[app]['volumes'].append(volume % os.environ)
-            for env in self._data[app].get('dev_environment', []):
-                if 'environment' not in self._data[app]:
-                    self._data[app]['environment'] = []
-                self._data[app]['environment'].append(env)
+
+            dev_environment = self._data[app].get('dev_environment', {})
+            if isinstance(dev_environment, list):
+                dev_environment = dict([l.split('=') for l in dev_environment])
+            self._data[app]['environment'].update(dev_environment)
+
             if 'dev_command' in self._data[app]:
                 self._data[app]['command'] = self._data[app]['dev_command']
 
