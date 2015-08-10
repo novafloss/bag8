@@ -2,6 +2,8 @@ app:
     image: bag8/busybox
     links:
         - link:link
+    environment:
+        DUMMY: nothing here
     dev_environment:
         - DUMMY=yo
     dev_volumes:
