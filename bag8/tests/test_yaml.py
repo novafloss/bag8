@@ -16,7 +16,7 @@ def test_data():
             'environment': {
                 'BAG8_LINKS': 'link',
                 'DNSDOCK_ALIAS': 'busybox.docker',
-                'DNSDOCK_IMAGE': None,
+                'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here',
             },
             'image': 'bag8/busybox',
@@ -26,9 +26,9 @@ def test_data():
         },
         'link': {
             'environment': {
-                'BAG8_LINKS': None,
+                'BAG8_LINKS': '',
                 'DNSDOCK_ALIAS': 'link.docker',
-                'DNSDOCK_IMAGE': None,
+                'DNSDOCK_IMAGE': '',
             },
             'image': 'bag8/busybox'
         }
@@ -42,7 +42,7 @@ def test_data():
             'environment': {
                 'BAG8_LINKS': 'link',
                 'DNSDOCK_ALIAS': 'busybox.docker',
-                'DNSDOCK_IMAGE': None,
+                'DNSDOCK_IMAGE': '',
                 'DUMMY': 'yo',
             },
             'image': 'bag8/busybox',
@@ -55,9 +55,9 @@ def test_data():
         },
         'link': {
             'environment': {
-                'BAG8_LINKS': None,
+                'BAG8_LINKS': '',
                 'DNSDOCK_ALIAS': 'link.docker',
-                'DNSDOCK_IMAGE': None,
+                'DNSDOCK_IMAGE': '',
             },
             'image': 'bag8/busybox'
         }
@@ -76,7 +76,7 @@ def test_service_dicts():
             'environment': {
                 'BAG8_LINKS': 'link',
                 'DNSDOCK_ALIAS': 'busybox.docker',
-                'DNSDOCK_IMAGE': None,
+                'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here',
             },
             'image': 'bag8/busybox',
@@ -88,9 +88,9 @@ def test_service_dicts():
             'name': 'link',
             'bag8_name': 'link',
             'environment': {
-                'BAG8_LINKS': None,
+                'BAG8_LINKS': '',
                 'DNSDOCK_ALIAS': 'link.docker',
-                'DNSDOCK_IMAGE': None,
+                'DNSDOCK_IMAGE': '',
             },
             'image': 'bag8/busybox'
         }
@@ -106,7 +106,7 @@ def test_service_dicts():
             'environment': {
                 'BAG8_LINKS': 'link',
                 'DNSDOCK_ALIAS': 'busybox.docker',
-                'DNSDOCK_IMAGE': None,
+                'DNSDOCK_IMAGE': '',
                 'DUMMY': 'yo',
             },
             'image': 'bag8/busybox',
@@ -121,9 +121,9 @@ def test_service_dicts():
             'name': 'link',
             'bag8_name': 'link',
             'environment': {
-                'BAG8_LINKS': None,
+                'BAG8_LINKS': '',
                 'DNSDOCK_ALIAS': 'link.docker',
-                'DNSDOCK_IMAGE': None,
+                'DNSDOCK_IMAGE': '',
             },
             'image': 'bag8/busybox'
         }
@@ -137,9 +137,9 @@ def test_service_dicts():
             'bag8_name': 'link.2',
             'dockerfile': os.path.join(project.build_path, 'Dockerfile'),
             'environment': {
-                'BAG8_LINKS': None,
+                'BAG8_LINKS': '',
                 'DNSDOCK_ALIAS': 'link2.docker',
-                'DNSDOCK_IMAGE': None,
+                'DNSDOCK_IMAGE': '',
             },
             'image': 'bag8/busybox',
             'links': []

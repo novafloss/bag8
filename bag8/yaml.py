@@ -44,7 +44,7 @@ class Yaml(object):
                                '{0}.{1}'.format(name, domain_suffix))
             if 'DNSDOCK_ALIAS' not in v['environment']:
                 v['environment']['DNSDOCK_ALIAS'] = domainname
-            v['environment']['DNSDOCK_IMAGE'] = None
+            v['environment']['DNSDOCK_IMAGE'] = ''
 
             # update sections
             custom_yml[name] = v
@@ -56,7 +56,7 @@ class Yaml(object):
                 except ValueError:
                     name = link
                 links.append(name)
-            v['environment']['BAG8_LINKS'] = ' '.join(links) or None
+            v['environment']['BAG8_LINKS'] = ' '.join(links)
 
         return custom_yml
 
