@@ -109,7 +109,7 @@ server=/{1}/{2}
                 '-v', '/var/run/docker.sock:/var/run/docker.sock',
                 '--name', 'dnsdock',
                 '-p', '172.17.42.1:53:53/udp',
-                'tonistiigi/dnsdock',
+                config.dnsdock_image,
                 "-domain={0}".format(config.domain_suffix)
             ])
 
