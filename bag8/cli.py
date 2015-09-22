@@ -68,7 +68,7 @@ def develop(command, interactive, prefix, project):
     try:
         p.get_services()
     except NoProjectYaml:
-        click.echo("Unknown bag8 project %s" % (project,))
+        click.echo("Unknown bag8 project %s" % (project,), err=True)
         sys.exit(1)
 
     # running
@@ -93,7 +93,7 @@ def dns():
 
     out, err, returncode = result
     if returncode:
-        click.echo(err + '\n' + out)
+        click.echo(err + '\n' + out, err=True)
         sys.exit(returncode)
 
 
@@ -236,7 +236,7 @@ def setup():
     try:
         getaddrinfo('dnsdock.' + Config().domain_suffix, 53)
     except gaierror:
-        click.echo("docker DNS resolution fails!")
+        click.echo("docker DNS resolution fails!", err=True)
         sys.exit(1)
     else:
         click.echo("docker DNS resolution is ready.")
