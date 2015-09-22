@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import os.path
 import sys
+import yaml
 
 from socket import gaierror
 from socket import getaddrinfo
@@ -18,6 +19,7 @@ from bag8.utils import check_call
 from bag8.utils import exec_
 from bag8.utils import inspect
 from bag8.utils import simple_name
+from bag8.yaml import Yaml
 
 from compose.service import BuildError
 from compose.cli.main import setup_logging
@@ -171,6 +173,16 @@ def push(project):
     """
     p = Project(project)
     p.push(service_names=[p.simple_name], insecure_registry=True)
+
+
+@bag8.command()
+@click.argument('project', default=cwdname)
+@click.argument('output', type=click.File('wb'), default='fig.yml')
+def render(output, project):
+    """Renders fig.yml like content to out file, default: fig.yml.
+    """
+    yaml.safe_dump(Yaml(Project(project)).data, output, indent=2,
+                   encoding='utf-8', allow_unicode=True)
 
 
 @bag8.command()
