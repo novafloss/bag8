@@ -282,4 +282,8 @@ def up(develop, prefix, project):
     """Up containers for a given project
     """
     p = Project(project, develop=develop, prefix=prefix)
-    p.up(allow_recreate=False)
+    try:
+        p.up(allow_recreate=False)
+    except BuildError as e:
+        click.echo(e.reason, err=True)
+        sys.exit(1)
