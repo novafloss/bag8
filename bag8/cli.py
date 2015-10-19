@@ -4,14 +4,10 @@ import os.path
 import sys
 import yaml
 
-from socket import gaierror
-from socket import getaddrinfo
-
 import click
 
 from docker.errors import APIError
 
-from bag8.config import Config
 from bag8.exceptions import NoProjectYaml
 from bag8.project import Project
 from bag8.tools import Tools
@@ -223,23 +219,6 @@ def run(command, develop, keep, prefix, project):
     """
     p = Project(project, develop=develop, prefix=prefix)
     p.run(command=command, remove=not keep)
-
-
-@bag8.command()
-def setup():
-    """Setup docker and dnsmasq."""
-
-    Tools().update_dnsmasq_conf()
-    Tools().update_docker_conf()
-    Tools().dns()
-
-    try:
-        getaddrinfo('dnsdock.' + Config().domain_suffix, 53)
-    except gaierror:
-        click.echo("docker DNS resolution fails!", err=True)
-        sys.exit(1)
-    else:
-        click.echo("docker DNS resolution is ready.")
 
 
 @bag8.command()

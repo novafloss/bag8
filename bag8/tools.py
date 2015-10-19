@@ -1,21 +1,15 @@
 from __future__ import absolute_import, print_function
 
-import click
 import logging
 import os
-import re
 import shutil
-
-from time import sleep
 
 from docker.errors import APIError
 
 from bag8.config import Config
 from bag8.project import Project
 from bag8.utils import check_call
-from bag8.utils import confirm
 from bag8.utils import inspect
-from bag8.utils import write_conf
 
 
 log = logging.getLogger(__name__)
@@ -25,71 +19,6 @@ class Tools(object):
 
     def __init__(self, project=None):
         self.project = project
-
-    def update_docker_conf(self):
-
-        conf_path = '/etc/default/docker'
-        conf_entry = '-bip 172.17.42.1/24 -dns 172.17.42.1'
-        conf_content = []
-
-        # check already set
-        with open(conf_path) as f:
-            conf_content += [l.strip() for l in f.readlines()]
-
-        # update content
-        opts = [conf_entry]
-        for i, l in enumerate(conf_content):
-            if not l.startswith('DOCKER_OPTS='):
-                continue
-            # has values we don't want to rewrite
-            if '-bip' in l or '-dns' in l:
-                return
-            # keep opts
-            opts.append(re.findall('^DOCKER_OPTS="(.*)"', l)[0])
-            # remove opts line
-            conf_content.remove(l)
-        # add new opts
-        conf_content.append('DOCKER_OPTS="{0}"'.format(' '.join(opts)))
-
-        click.echo("""
-# updates {0} with:
-{1}
-""".format(conf_path, conf_entry).strip())
-
-        # update resolve config
-        write_conf(conf_path, '\n'.join(conf_content) + '\n',
-                   bak_path='/tmp/default.docker.orig')
-
-        if confirm('`sudo service docker restart` ?'):
-            check_call(['sudo', 'service', 'docker', 'restart'])
-            sleep(5)
-
-    def update_dnsmasq_conf(self):
-
-        config = Config()
-
-        conf_path = '/etc/dnsmasq.d/50-bag8'
-        if os.path.exists(conf_path):
-            return
-
-        conf_content = """
-except-interface={0}
-bind-interfaces
-server=/{1}/{2}
-""".format(config.docker_interface, config.domain_suffix,
-           config.docker_ip).strip()
-
-        click.echo("""
-# updates {0} with:
-{1}
-""".format(conf_path, conf_content).strip())
-
-        # update dnsmasq config
-        write_conf(conf_path, conf_content + '\n')
-
-        if confirm('`sudo service dnsmasq restart` ?'):
-            check_call(['sudo', 'service', 'dnsmasq', 'restart'])
-            sleep(5)
 
     def dns(self):
 
