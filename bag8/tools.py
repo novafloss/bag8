@@ -110,6 +110,7 @@ server=/{1}/{2}
                 '--name', 'dnsdock',
                 '-p', '172.17.42.1:53:53/udp',
                 config.dnsdock_image,
+                "-nameserver={}".format(config.nameserver),
                 "-domain={0}".format(config.domain_suffix)
             ])
 
