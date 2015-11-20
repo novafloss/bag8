@@ -1,0 +1,15 @@
+language: python
+
+python:
+  - "2.7"
+
+sudo: required
+
+services:
+  - docker
+
+install:
+  - make install-test
+
+script:
+  - make test

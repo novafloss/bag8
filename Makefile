@@ -19,11 +19,12 @@ help:
 # target: install - Install bag8.
 .PHONY: install
 install:
+	pip install -U pip
 	pip install -e .
 
 # target: install-test - Install tests requirements.
 .PHONY: install-test
-install-test: install
+install-test:
 	pip install -r requirements.tests.txt
 
 # target: test-flake8 - Run flake8 tests.
@@ -33,14 +34,8 @@ test-flake8:
 
 # target: test-debug - Run tests in fail fast and very verbose way.
 .PHONY: test-debug
-test-debug: clean test-flake8
+test-python:
 	py.test -sx -vv bag8
-
-# target: test-xdist - Run parallels tests.
-.PHONY: test-xdist
-test-xdist: clean test-flake8
-	py.test -x -m "exclusive" bag8
-	py.test -n3 --boxed -m "not exclusive" bag8
 
 # target: test - Run tests for several versions of python with tox.
 .PHONY: test
