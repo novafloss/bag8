@@ -34,6 +34,9 @@ class Config(object):
 
     def iter_data_paths(self):
         for p in self._data_paths:
+            if not os.path.exists(p):
+                click.echo('skip path: {0}'.format(p))
+                continue
             for d in os.listdir(p):
                 if not os.path.exists(os.path.join(p, d, 'fig.yml')):
                     continue
