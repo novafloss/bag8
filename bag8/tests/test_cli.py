@@ -34,7 +34,7 @@ def test_develop(slave_id):
     out, err, code = check_call(['bag8', 'develop', 'busybox',
                                  '-c', 'echo "hi"', '-p', slave_id])
     assert code == 0, err + '\n' + out
-    assert out.strip() == 'hi'
+    assert out.strip() == 'hi', err + '\n' + out
 
     # check container exist
     p = Project('busybox', develop=True, prefix=slave_id)
@@ -44,7 +44,7 @@ def test_develop(slave_id):
     out, err, code = check_call(['bag8', 'develop', 'busybox',
                                  '-c', 'echo "yo"', '-p', slave_id])
     assert code == 0, err + '\n' + out
-    assert out.strip() == 'yo'
+    assert out.strip() == 'yo', err + '\n' + out
 
     # stop
     p.stop(timeout=0)
@@ -65,7 +65,7 @@ def test_develop(slave_id):
     out, err, code = check_call(['bag8', 'develop', 'busybox', '-c', 'env',
                                  '-p', slave_id])
     assert code == 0, err + '\n' + out
-    assert 'DUMMY=yo' in out.split()
+    assert 'DUMMY=yo' in out.split(), err + '\n' + out
 
 
 @pytest.mark.needdocker()
@@ -86,8 +86,8 @@ def test_develop_no_recreate(slave_id):
     out, err, code = check_call(['bag8', 'develop', 'busybox',
                                  '-c', 'echo "hi"', '-p', slave_id])
     assert code == 0, err + '\n' + out
-    assert err.strip() == 'Creating {0}_busybox_1...'.format(slave_id)
-    assert out.strip() == 'hi'
+    assert err.strip() == 'Creating {0}_busybox_1...'.format(slave_id), err + '\n' + out  # noqa
+    assert out.strip() == 'hi', err + '\n' + out
 
 
 @pytest.mark.needdocker()
