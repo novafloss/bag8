@@ -1,6 +1,10 @@
 Bag8
 ====
 
+.. image:: https://travis-ci.org/novafloss/bag8.svg
+   :target: https://travis-ci.org/novafloss/bag8
+   :alt: We are under CI!!
+
 Let's explain how to orchestrate docker images and containers the easy way.
 
 Installation
