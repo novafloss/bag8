@@ -1,6 +1,117 @@
 CHANGES
 =======
 
+0.2.0
+-----
+
+* Updates AUTHORS
+* Add test assertion failed message
+* Fix missing data_paths
+* Add CI
+* Ignore .eggs dir
+* Configurable fallback nameserver for dnsdock
+* Replaces setup command with doc
+* Removes __future__ unicode_literals
+* Uses err flag to True when echo an error
+* Catch error smoothly when build fail on up
+* Adds render command
+* Moves to specific dnsdock_image
+* Permits make call without warning
+* Fixes the license
+* Updates pip before install
+* Fixes empty env vars
+* Fixes attribute error in yaml module
+* correct arguments for calling "cp"
+* Fixes missing clean at test teardown
+* Permits run with prefix
+* Handle non existing project error
+* Add message when start dnsdock
+* Adds missing demo data file
+* Ensures strings for python subprocess call
+* Makes better iter_project and get_container_name
+* Catches build error
+* Adds bag8 labels
+* Replaces meaningless synchronous py.test marker with exclusive
+* Specifies project base path to test
+* Install common requirements when call install-test
+* Does not 'hardcode' allow_recreate option when run deps
+* Adds helper to get container name for a given service
+* Does not bind nginx port when run tests
+* Permits cli to target single service
+* Does not recreate container in develop mode
+* Use alias instead of name
+* Fix non working dev_command with busybox
+* Permits command overriding in develop mode
+* Moves domain suffix to .docker
+* Restores prefix behaviour
+* Restores logs command
+* Overrides insecure_registry behaviour with bag8 config
+* Removes legacy code
+* Updates tests
+* Updates CLI
+* Updates tools methods
+* Adds new python API based on compose
+* Use .docker by default
+* List containers linked in BAG8_LINKS
+* Accept link without alias
+* Remove develop recursive behaviour
+* Handles interactive mode wisely when develop
+* Adds first test
+* Adds common error method
+* Permits to specify command when develop
+* Moves busybox files to specifics data dir
+* Add dns command
+* Add setup command
+* Do not resolve from container
+* Launch DNS container automatically
+* Fix recursive stop
+* Remove containers recursively
+* Make recursive iter_deps
+* Ensure default project when rm
+* Do not stop when develop
+* Resolves hosts locally with dnsmasq
+* Strips message
+* Does not change the resolv config
+* Removes useless inspect_live method
+* Adds _update_docker_conf behaviour
+* Moves update_resolve_conf method to tools module
+* Adds confirm and write_conf common methods
+* Reuse docker-py client to get inspect payload
+* Adds implicit DNSDOCK_ALIAS to containers
+* Stops previous nginx for refresh
+* Enhances hosts resolving
+* Fix typo in argument
+* Not exit when develop on missing container
+* Removes ugly SystemExit catch
+* Checks container is running before stop
+* Fixes dependency start failure if container doesn't exist yet
+* Replaces call_func with exit
+* Fixes develop side effect on deps
+* Handles only appropiates args in develop mode
+* Does not call process with exec when up in develop
+* Shares dev volumes only for the app
+* Cleans click command decorator
+* Covers all up args when develop
+* Use same develop flag everywhere
+* Render develop mode values in yaml deps parts
+* Start containers in the background
+* Add develop mode for render command
+* Add develop mode for up command
+* Use CWD as default project
+* Recursively stop containers
+* Add logging on develop command
+* Enhances wise linking
+* Fixes keyerror
+* Add develop command
+* Starts linked containers automatically on demand
+* Adds missing prefix option on up command
+* Add nginx port 443
+* Add public port 80 for nginx
+* Handles -p prefix option in command for containers
+* Lets pbr manage version
+* Adds AUTHORS and ChangeLog files
+* Udpates ignore file
+
 0.1.0
 -----
 
