@@ -1,2 +1,4 @@
 app:
     image: bag8/busybox
+    environment:
+        - DUMMY=nothing here too

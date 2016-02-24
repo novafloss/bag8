@@ -146,7 +146,9 @@ def test_logs(slave_id):
 
 @pytest.mark.exclusive
 @pytest.mark.needdocker()
-def test_nginx(slave_id):
+def test_nginx(config, slave_id):
+
+    conf_path = os.path.join(config.tmpfolder, 'nginx', 'conf.d')
 
     # up a container to proxify
     check_call(['bag8', 'up', 'busybox', '-p', slave_id])
@@ -154,6 +156,21 @@ def test_nginx(slave_id):
     out, err, code = check_call(['bag8', 'nginx', '--no-ports'])
     assert code == 0, err + '\n' + out
     assert inspect('nginx')['State']['Running']
+
+    site_conf_path = os.path.join(conf_path, 'busybox.conf')
+    assert os.path.exists(site_conf_path)
+    with open(site_conf_path) as site_conf:
+        assert site_conf.readlines()[1].strip() == 'server dummy.docker:1234;'
+
+    out, err, code = check_call(['bag8', 'nginx', '--no-ports',
+                                 '--upstream-server-domain', '192.168.0.1'])
+    assert code == 0, err + '\n' + out
+    assert inspect('nginx')['State']['Running']
+
+    site_conf_path = os.path.join(conf_path, 'busybox.conf')
+    assert os.path.exists(site_conf_path)
+    with open(site_conf_path) as site_conf:
+        assert site_conf.readlines()[1].strip() == 'server 192.168.0.1:1234;'
 
 
 @pytest.mark.exclusive
