@@ -18,7 +18,7 @@ help:
 
 # target: install - Install bag8.
 .PHONY: install
-install:
+install: clean
 	pip install -U pip
 	pip install -e .
 
@@ -27,17 +27,8 @@ install:
 install-test:
 	pip install -r requirements.tests.txt
 
-# target: test-flake8 - Run flake8 tests.
-.PHONY: test-flake8
-test-flake8:
-	flake8 bag8
-
-# target: test-debug - Run tests in fail fast and very verbose way.
-.PHONY: test-debug
-test-python:
-	py.test -sx -vv bag8
-
-# target: test - Run tests for several versions of python with tox.
+# target: test - Run test in fail fast and very verbose way.
 .PHONY: test
-test: clean test-flake8
-	tox
+test:
+	flake8 bag8
+	py.test -sx -vv bag8

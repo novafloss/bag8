@@ -9,7 +9,7 @@ services:
   - docker
 
 install:
-  - make install-test
+  - pip install tox
 
 script:
-  - make test
+  - tox
