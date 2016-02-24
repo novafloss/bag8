@@ -77,3 +77,16 @@ def test_iter_projects(slave_id):
         '{0}:busybox'.format(slave_id),
         '{0}:link'.format(slave_id),
     ] if c in containers]
+
+
+def test_project_environment():
+    project = Project('busybox')
+    assert project.environment == {
+        'DUMMY': 'nothing here'
+    }
+    project = Project('link')
+    assert project.environment == {
+        'DUMMY': 'nothing here too'
+    }
+    project = Project('link.2')
+    assert project.environment == {}

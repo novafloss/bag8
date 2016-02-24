@@ -99,6 +99,16 @@ class Project(ComposeProject):
                 for l in self.yaml.get('app', {}).get('links', [])]
 
     @property
+    def environment(self):
+        environment = self.yaml['app'].get('environment')
+        if isinstance(environment, dict):
+            return environment.copy()
+        # something like: ['a=1', 'b=2', ...]
+        if isinstance(environment, list):
+            return {e.split('=')[0]: e.split('=')[1] for e in environment}
+        return {}
+
+    @property
     def internal_links(self):
         """Returns links from the project yaml file but not in the app section.
         """

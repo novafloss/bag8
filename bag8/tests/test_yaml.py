@@ -29,6 +29,7 @@ def test_data():
                 'BAG8_LINKS': '',
                 'DNSDOCK_ALIAS': 'link.docker',
                 'DNSDOCK_IMAGE': '',
+                'DUMMY': 'nothing here too'
             },
             'image': 'bag8/busybox'
         }
@@ -58,6 +59,7 @@ def test_data():
                 'BAG8_LINKS': '',
                 'DNSDOCK_ALIAS': 'link.docker',
                 'DNSDOCK_IMAGE': '',
+                'DUMMY': 'nothing here too'
             },
             'image': 'bag8/busybox'
         }
@@ -91,6 +93,7 @@ def test_service_dicts():
                 'BAG8_LINKS': '',
                 'DNSDOCK_ALIAS': 'link.docker',
                 'DNSDOCK_IMAGE': '',
+                'DUMMY': 'nothing here too'
             },
             'image': 'bag8/busybox'
         }
@@ -124,6 +127,7 @@ def test_service_dicts():
                 'BAG8_LINKS': '',
                 'DNSDOCK_ALIAS': 'link.docker',
                 'DNSDOCK_IMAGE': '',
+                'DUMMY': 'nothing here too'
             },
             'image': 'bag8/busybox'
         }
