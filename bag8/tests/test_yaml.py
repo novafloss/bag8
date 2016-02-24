@@ -18,6 +18,7 @@ def test_data():
                 'DNSDOCK_ALIAS': 'busybox.docker',
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here',
+                'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker',
             },
             'image': 'bag8/busybox',
             'links': [
@@ -45,6 +46,7 @@ def test_data():
                 'DNSDOCK_ALIAS': 'busybox.docker',
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'yo',
+                'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker',
             },
             'image': 'bag8/busybox',
             'links': [
@@ -80,6 +82,7 @@ def test_service_dicts():
                 'DNSDOCK_ALIAS': 'busybox.docker',
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here',
+                'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker',
             },
             'image': 'bag8/busybox',
             'links': [
@@ -111,6 +114,7 @@ def test_service_dicts():
                 'DNSDOCK_ALIAS': 'busybox.docker',
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'yo',
+                'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker',
             },
             'image': 'bag8/busybox',
             'links': [

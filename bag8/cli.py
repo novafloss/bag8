@@ -140,7 +140,9 @@ def logs(follow, prefix, project, service):
 @bag8.command()
 @click.option('--no-ports', default=False, is_flag=True,
               help='Test mode ? no port binding.')
-def nginx(no_ports):
+@click.option('--upstream-server-domain', default=None,
+              help='Specify nginx upstream server domain to render in config files.')  # noqa
+def nginx(no_ports, upstream_server_domain):
     """Run nginx container linked with all available sites.
     """
     # stop previous nginx if exist
@@ -150,7 +152,10 @@ def nginx(no_ports):
     except APIError:
         pass
     # start a new one
-    out, err, code = Tools().nginx(no_ports=no_ports)
+    out, err, code = Tools().nginx(
+        no_ports=no_ports,
+        upstream_server_domain=upstream_server_domain
+    )
 
 
 @bag8.command()

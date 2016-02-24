@@ -82,7 +82,8 @@ def test_iter_projects(slave_id):
 def test_project_environment():
     project = Project('busybox')
     assert project.environment == {
-        'DUMMY': 'nothing here'
+        'DUMMY': 'nothing here',
+        'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker'
     }
     project = Project('link')
     assert project.environment == {

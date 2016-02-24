@@ -43,7 +43,7 @@ class Tools(object):
                 "-domain={0}".format(config.domain_suffix)
             ])
 
-    def nginx(self, no_ports=False):
+    def nginx(self, no_ports=False, upstream_server_domain=None):
 
         config = Config()
 
@@ -85,8 +85,15 @@ class Tools(object):
             links.append('{0}:{1}.{2}'.format(container_name, name,
                                               config.domain_suffix))
             # copy nginx site conf
-            shutil.copy(site_conf_path,
-                        os.path.join(conf_path, '{0}.conf'.format(name)))
+            with open(site_conf_path) as site_available:
+                site_enabled_path = os.path.join(conf_path,
+                                                 '{0}.conf'.format(name))
+                with open(site_enabled_path, 'wb') as site_enabled:
+                    site_enabled.write(site_available.read() % dict(
+                        project.environment, **{
+                        'UPSTREAM_SERVER_DOMAIN': upstream_server_domain or
+                                                  project.environment.get('NGINX_UPSTREAM_SERVER_DOMAIN')  # noqa
+                    }))
 
         args = [
             'docker',

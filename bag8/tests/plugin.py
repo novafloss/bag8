@@ -11,6 +11,7 @@ from compose.cli.docker_client import docker_client
 
 import bag8
 
+from bag8.config import Config
 from bag8.exceptions import CheckCallFailed
 from bag8.utils import check_call as base_check_call
 
@@ -47,6 +48,11 @@ def config_path(home_path):
 @pytest.fixture(scope='function')
 def local_path(home_path):
     return os.path.join(home_path, '.local', 'bag8')
+
+
+@pytest.fixture(scope='function')
+def config():
+    return Config()
 
 
 @pytest.fixture(autouse=True, scope='function')
