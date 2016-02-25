@@ -43,7 +43,8 @@ class Tools(object):
                 "-domain={0}".format(config.domain_suffix)
             ])
 
-    def nginx(self, no_ports=False, upstream_server_domain=None):
+    def nginx(self, local_projects=None, no_ports=False,
+              upstream_server_domain=None):
 
         config = Config()
 
@@ -88,12 +89,17 @@ class Tools(object):
             with open(site_conf_path) as site_available:
                 site_enabled_path = os.path.join(conf_path,
                                                  '{0}.conf'.format(name))
+                upstream_domain = project.environment.get('NGINX_UPSTREAM_SERVER_DOMAIN')  # noqa
+                # specified from cli and require overriding ?
+                if upstream_server_domain \
+                        and (not local_projects or name in local_projects):
+                    upstream_domain = upstream_server_domain
                 with open(site_enabled_path, 'wb') as site_enabled:
                     site_enabled.write(site_available.read() % dict(
                         project.environment, **{
-                        'UPSTREAM_SERVER_DOMAIN': upstream_server_domain or
-                                                  project.environment.get('NGINX_UPSTREAM_SERVER_DOMAIN')  # noqa
-                    }))
+                            'UPSTREAM_SERVER_DOMAIN': upstream_domain
+                        }
+                    ))
 
         args = [
             'docker',
