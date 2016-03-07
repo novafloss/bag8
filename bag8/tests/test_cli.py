@@ -172,6 +172,30 @@ def test_nginx(config, slave_id):
     with open(site_conf_path) as site_conf:
         assert site_conf.readlines()[1].strip() == 'server 192.168.0.1:1234;'
 
+    # in filtered projects to overide upstream domain
+    out, err, code = check_call(['bag8', 'nginx', '--no-ports',
+                                 '-p', 'busybox', '-p', 'link',
+                                 '--upstream-server-domain', '192.168.0.1'])
+    assert code == 0, err + '\n' + out
+    assert inspect('nginx')['State']['Running']
+
+    site_conf_path = os.path.join(conf_path, 'busybox.conf')
+    assert os.path.exists(site_conf_path)
+    with open(site_conf_path) as site_conf:
+        assert site_conf.readlines()[1].strip() == 'server 192.168.0.1:1234;'
+
+    # not in filtered projects to overide upstream domain
+    out, err, code = check_call(['bag8', 'nginx', '--no-ports',
+                                 '-p', 'link',
+                                 '--upstream-server-domain', '192.168.0.1'])
+    assert code == 0, err + '\n' + out
+    assert inspect('nginx')['State']['Running']
+
+    site_conf_path = os.path.join(conf_path, 'busybox.conf')
+    assert os.path.exists(site_conf_path)
+    with open(site_conf_path) as site_conf:
+        assert site_conf.readlines()[1].strip() == 'server dummy.docker:1234;'
+
 
 @pytest.mark.exclusive
 @pytest.mark.needdocker()

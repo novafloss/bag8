@@ -138,11 +138,13 @@ def logs(follow, prefix, project, service):
 
 
 @bag8.command()
+@click.option('-p', '--local-projects', default=None, multiple=True,
+              help='Projects that need specific nginx upstream server domain (default: all), ex: -p busybox -p link etc.')  # noqa
 @click.option('--no-ports', default=False, is_flag=True,
               help='Test mode ? no port binding.')
 @click.option('--upstream-server-domain', default=None,
               help='Specify nginx upstream server domain to render in config files.')  # noqa
-def nginx(no_ports, upstream_server_domain):
+def nginx(local_projects, no_ports, upstream_server_domain):
     """Run nginx container linked with all available sites.
     """
     # stop previous nginx if exist
@@ -153,6 +155,7 @@ def nginx(no_ports, upstream_server_domain):
         pass
     # start a new one
     out, err, code = Tools().nginx(
+        local_projects=local_projects,
         no_ports=no_ports,
         upstream_server_domain=upstream_server_domain
     )
