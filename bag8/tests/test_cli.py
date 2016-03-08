@@ -34,7 +34,7 @@ def test_develop(slave_id):
     out, err, code = check_call(['bag8', 'develop', 'busybox',
                                  '-c', 'echo "hi"', '-p', slave_id])
     assert code == 0, err + '\n' + out
-    assert out.strip() == 'hi', err + '\n' + out
+    assert out.strip().split('\n')[-1] == 'hi', err + '\n' + out
 
     # check container exist
     p = Project('busybox', develop=True, prefix=slave_id)
@@ -262,7 +262,7 @@ def test_run(slave_id):
     out, err, code = check_call(['bag8', 'run', 'busybox',
                                  '-c', 'echo "hi"', '-p', slave_id])
     assert code == 0, err + '\n' + out
-    assert out.strip() == 'hi'
+    assert out.strip().split('\n')[-1] == 'hi'
 
 
 @pytest.mark.needdocker()
