@@ -108,6 +108,9 @@ class Service(ComposeService):
 
     def wait_links(self):
         config = Config()
+        # do not use the wait behaviour
+        if config.skip_wait:
+            return
         for service, name in self.links:
             for ports in service.options.get('expose', []):
                 if not ports:

@@ -65,6 +65,7 @@ def _setup(config_path, slave_id):
                          b'..', b'data'),
         ],
         b'prefix': slave_id,
+        b'skip_wait': os.getenv('SKIP_WAIT', 'no') == 'yes',
     }
     with open(config_path, 'w') as fo:
         yaml.dump(settings, fo, indent=2, default_flow_style=False, width=80)
