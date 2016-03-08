@@ -31,6 +31,7 @@ class Config(object):
         self.dnsdock_image = data.get('dnsdock_image',
                                       'tonistiigi/dnsdock:v1.10.0')
         self.nameserver = data.get('nameserver', '8.8.8.8:53')
+        self.wait_seconds = data.get('wait_seconds', 10)
 
     def iter_data_paths(self):
         for p in self._data_paths:
