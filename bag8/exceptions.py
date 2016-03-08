@@ -9,3 +9,7 @@ class NoDockerfile(Exception):
 
 class CheckCallFailed(Exception):
     pass
+
+
+class WaitLinkFailed(Exception):
+    pass
