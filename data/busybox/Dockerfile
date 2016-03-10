@@ -1,2 +1,2 @@
 FROM busybox
-CMD sleep 60
+CMD tail -f /dev/null

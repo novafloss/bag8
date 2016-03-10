@@ -32,7 +32,8 @@ def test_data():
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here too'
             },
-            'image': 'bag8/busybox'
+            'expose': [1234],
+            'image': 'bag8/link'
         }
     }
 
@@ -63,7 +64,8 @@ def test_data():
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here too'
             },
-            'image': 'bag8/busybox'
+            'expose': [1234],
+            'image': 'bag8/link'
         }
     }
 
@@ -98,7 +100,8 @@ def test_service_dicts():
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here too'
             },
-            'image': 'bag8/busybox'
+            'expose': [1234],
+            'image': 'bag8/link'
         }
     ])
 
@@ -133,7 +136,8 @@ def test_service_dicts():
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here too'
             },
-            'image': 'bag8/busybox'
+            'expose': [1234],
+            'image': 'bag8/link'
         }
     ])
 

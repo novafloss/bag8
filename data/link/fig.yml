@@ -1,4 +1,6 @@
 app:
-    image: bag8/busybox
+    image: bag8/link
+    expose:
+        - 1234
     environment:
         - DUMMY=nothing here too

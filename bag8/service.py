@@ -15,9 +15,10 @@ from compose.progress_stream import stream_output
 from compose.service import Service as ComposeService
 from compose.service import parse_repository_tag
 
+from bag8.config import Config
 from bag8.const import LABEL_BAG8_PROJECT
 from bag8.const import LABEL_BAG8_SERVICE
-from bag8.utils import exec_
+from bag8.utils import exec_, wait_
 
 
 class Service(ComposeService):
@@ -105,6 +106,19 @@ class Service(ComposeService):
 
         sys.exit(exit_code)
 
+    def wait_links(self):
+        config = Config()
+        # do not use the wait behaviour
+        if config.skip_wait:
+            return
+        for service, name in self.links:
+            for ports in service.options.get('expose', []):
+                if not ports:
+                    continue
+                host = '{}.{}'.format(service.bag8_name, config.domain_suffix)
+                port_to_wait = str(ports).split(':')[0]
+                wait_(host, port_to_wait, max_retry=config.wait_seconds)
+
     def start(self, one_off=False, **options):
         for c in self.containers(stopped=True, one_off=one_off):
             self.start_container_if_stopped(c, **options)
@@ -117,6 +131,7 @@ class Service(ComposeService):
 
     def start_container(self, container, **options):
         interactive = options.pop('interactive', False)
+        self.wait_links()
         if interactive:
             dockerpty.start(self.client, container.id, interactive=interactive)
             exit_code = container.wait()
