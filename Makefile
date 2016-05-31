@@ -20,7 +20,6 @@ help:
 # target: install - Install bag8.
 .PHONY: install
 install: clean
-	pip install -U pip
 	pip install -e .
 
 # target: install-test - Install tests requirements.
