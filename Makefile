@@ -6,7 +6,8 @@ all:
 # target: clean - Remove .pyc files.
 .PHONY: clean
 clean:
-	find ./ -name '*.pyc' -delete
+	find ./ -name *.pyc -delete
+	find ./ -name __pycache__ -type d | xargs rm -rf
 
 # target: help - Display callable targets.
 .PHONY: help
@@ -19,13 +20,12 @@ help:
 # target: install - Install bag8.
 .PHONY: install
 install: clean
-	pip install -U pip
 	pip install -e .
 
 # target: install-test - Install tests requirements.
 .PHONY: install-test
 install-test:
-	pip install -r requirements.tests.txt
+	pip install -e ".[test]"
 
 # target: test - Run test in fail fast and very verbose way.
 .PHONY: test
