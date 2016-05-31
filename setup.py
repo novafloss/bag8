@@ -46,6 +46,10 @@ if __name__ == '__main__':
                 'pytest',
                 'tox',
             ],
+            'release': [
+                'wheel',
+                'zest.releaser'
+            ],
         },
         entry_points={
             'console_scripts': [
