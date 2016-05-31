@@ -6,7 +6,8 @@ all:
 # target: clean - Remove .pyc files.
 .PHONY: clean
 clean:
-	find ./ -name '*.pyc' -delete
+	find ./ -name *.pyc -delete
+	find ./ -name __pycache__ -type d | xargs rm -rf
 
 # target: help - Display callable targets.
 .PHONY: help
