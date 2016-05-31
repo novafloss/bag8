@@ -25,7 +25,7 @@ install: clean
 # target: install-test - Install tests requirements.
 .PHONY: install-test
 install-test:
-	pip install -r requirements.tests.txt
+	pip install -e ".[test]"
 
 # target: test - Run test in fail fast and very verbose way.
 .PHONY: test
