@@ -32,3 +32,8 @@ install-test:
 test:
 	flake8 bag8
 	py.test -sx -vv bag8
+
+.PHONY: release
+release:
+	pip install -e ".[release]"
+	fullrelease
