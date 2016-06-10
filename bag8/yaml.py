@@ -8,6 +8,9 @@ from bag8.exceptions import NoProjectYaml
 from bag8.utils import simple_name
 
 
+CURR_DIR = os.path.realpath('.')
+
+
 class Yaml(object):
 
     def __init__(self, project):
@@ -103,7 +106,9 @@ class Yaml(object):
             for volume in self._data[app].get('dev_volumes', []):
                 if 'volumes' not in self._data[app]:
                     self._data[app]['volumes'] = []
-                self._data[app]['volumes'].append(volume % os.environ)
+                self._data[app]['volumes'].append(volume % dict({
+                    'PWD': CURR_DIR,
+                }, **os.environ))
 
             dev_environment = self._data[app].get('dev_environment', {})
             if isinstance(dev_environment, list):

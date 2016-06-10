@@ -83,7 +83,7 @@ def test_project_environment():
     project = Project('busybox')
     assert project.environment == {
         'DUMMY': 'nothing here',
-        'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker'
+        'NGINX_UPSTREAM_SERVER_DOMAIN': 'link.docker'
     }
     project = Project('link')
     assert project.environment == {

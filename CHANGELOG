@@ -4,6 +4,7 @@ CHANGES
 0.2.1 (unreleased)
 ------------------
 
+- Update the README
 - Add zest.releaser
 - Remove pbr
 - Wait links if we have exposed port
