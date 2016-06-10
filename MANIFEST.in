@@ -1,4 +1,5 @@
-recursive-include bag8 *
+include bag8
+prune bag8/tests
 include AUTHORS
 include CHANGELOG
 include LICENSE
