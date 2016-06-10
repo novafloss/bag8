@@ -6,6 +6,9 @@ from bag8.project import Project
 from bag8.yaml import Yaml
 
 
+CURR_DIR = os.path.realpath('.')
+
+
 def test_data():
 
     # normal
@@ -18,7 +21,7 @@ def test_data():
                 'DNSDOCK_ALIAS': 'busybox.docker',
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here',
-                'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker',
+                'NGINX_UPSTREAM_SERVER_DOMAIN': 'link.docker',
             },
             'image': 'bag8/busybox',
             'links': [
@@ -47,14 +50,14 @@ def test_data():
                 'DNSDOCK_ALIAS': 'busybox.docker',
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'yo',
-                'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker',
+                'NGINX_UPSTREAM_SERVER_DOMAIN': 'link.docker',
             },
             'image': 'bag8/busybox',
             'links': [
                 'link:link'
             ],
             'volumes': [
-                '/tmp:/tmp'
+                '{}:/tmp'.format(CURR_DIR)
             ]
         },
         'link': {
@@ -84,7 +87,7 @@ def test_service_dicts():
                 'DNSDOCK_ALIAS': 'busybox.docker',
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'nothing here',
-                'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker',
+                'NGINX_UPSTREAM_SERVER_DOMAIN': 'link.docker',
             },
             'image': 'bag8/busybox',
             'links': [
@@ -117,14 +120,14 @@ def test_service_dicts():
                 'DNSDOCK_ALIAS': 'busybox.docker',
                 'DNSDOCK_IMAGE': '',
                 'DUMMY': 'yo',
-                'NGINX_UPSTREAM_SERVER_DOMAIN': 'dummy.docker',
+                'NGINX_UPSTREAM_SERVER_DOMAIN': 'link.docker',
             },
             'image': 'bag8/busybox',
             'links': [
                 'link:link'
             ],
             'volumes': [
-                '/tmp:/tmp'
+                '{}:/tmp'.format(CURR_DIR)
             ]
         },
         {

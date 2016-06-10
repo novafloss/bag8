@@ -4,8 +4,8 @@ app:
         - link:link
     environment:
         DUMMY: nothing here
-        NGINX_UPSTREAM_SERVER_DOMAIN: dummy.docker
+        NGINX_UPSTREAM_SERVER_DOMAIN: link.docker
     dev_environment:
         - DUMMY=yo
     dev_volumes:
-        - "/tmp:/tmp"
+        - "%(PWD)s:/tmp"

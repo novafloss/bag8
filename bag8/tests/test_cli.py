@@ -60,7 +60,10 @@ def test_develop(slave_id):
                                  '-c', 'touch "{0}"'.format(tmp_file),
                                  '-p', slave_id])
     assert code == 0, err + '\n' + out
-    assert os.path.exists(tmp_file)
+    local_tmp_file = tmp_file.replace('/tmp/', '')
+    assert os.path.exists(local_tmp_file), \
+        'not found: {}'.format(local_tmp_file)
+    os.remove(local_tmp_file)
 
     out, err, code = check_call(['bag8', 'develop', 'busybox', '-c', 'env',
                                  '-p', slave_id])
@@ -160,7 +163,7 @@ def test_nginx(config, slave_id):
     site_conf_path = os.path.join(conf_path, 'busybox.conf')
     assert os.path.exists(site_conf_path)
     with open(site_conf_path) as site_conf:
-        assert site_conf.readlines()[1].strip() == 'server dummy.docker:1234;'
+        assert site_conf.readlines()[1].strip() == 'server link.docker:1234;'
 
     out, err, code = check_call(['bag8', 'nginx', '--no-ports',
                                  '--upstream-server-domain', '192.168.0.1'])
@@ -194,7 +197,7 @@ def test_nginx(config, slave_id):
     site_conf_path = os.path.join(conf_path, 'busybox.conf')
     assert os.path.exists(site_conf_path)
     with open(site_conf_path) as site_conf:
-        assert site_conf.readlines()[1].strip() == 'server dummy.docker:1234;'
+        assert site_conf.readlines()[1].strip() == 'server link.docker:1234;'
 
 
 @pytest.mark.exclusive
