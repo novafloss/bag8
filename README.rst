@@ -249,11 +249,11 @@ It could have been your project sources. In practice, changes in the container
 persist locally.
 
 .. code:: console
+
     / # touch /tmp/this-is-a-demo
     / # exit
     @me ~/busybox$ ls
     this-is-a-demo
-
 
 Nginx
 -----
@@ -279,7 +279,6 @@ config in a common folder and share it in the nginx container to start:
     Server: nginx/1.9.11
     Date: Wed, 08 Jun 2016 21:32:10 GMT
     Connection: keep-alive
-
 
 Dns
 ---
