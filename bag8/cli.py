@@ -57,8 +57,6 @@ def build(cache, project):
 def develop(command, interactive, prefix, project):
     """Drops you in develop environment of your project.
     """
-    Tools().dns()
-
     p = Project(project, develop=True, prefix=prefix)
 
     try:
