@@ -37,7 +37,7 @@ class Tools(object):
                 '-d',
                 '-v', '/var/run/docker.sock:/var/run/docker.sock',
                 '--name', 'dnsdock',
-                '-p', '172.17.42.1:53:53/udp',
+                '-p', '{}:53:53/udp'.format(config.docker_ip),
                 config.dnsdock_image,
                 "-nameserver={}".format(config.nameserver),
                 "-domain={0}".format(config.domain_suffix)
